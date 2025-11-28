@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
+
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
+
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="$FLUTTER_BASE_HREF">
+
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Installable Kokonuts Bookkeeping progressive web app.">
+  <meta name="application-name" content="Kokonuts Bookkeeping">
+  <meta name="theme-color" content="#0175C2">
+
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="kokonuts_bookkeeping">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
+
+  <title>Kokonuts Bookkeeping</title>
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    .splash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #FFFFFF;
+    }
+
+    .splash .logo {
+      width: 150px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .splash {
+        background-color: #000000;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash">
+    <picture>
+      <source srcset="icons/app_logo_dark.png" media="(prefers-color-scheme: dark)">
+      <img class="logo" src="icons/app_logo_light.png" alt="Kokonuts Bookkeeping Logo">
+    </picture>
+  </div>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
