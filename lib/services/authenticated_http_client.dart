@@ -51,7 +51,7 @@ class AuthenticatedHttpClient extends http.BaseClient {
   })  : _tokenProvider = tokenProvider,
         _innerClient = innerClient ?? http.Client(),
         _authorizationBuilder = authorizationBuilder ??
-            ((token) => token.isEmpty ? token : 'Bearer $token');
+            ((token) => token.isEmpty ? token : 'Token $token');
 
   final Future<AuthTokenPayload?> Function() _tokenProvider;
   final http.Client _innerClient;

@@ -3,9 +3,21 @@ import 'package:flutter/services.dart';
 
 import '../app/app_state.dart';
 import '../app/app_state_scope.dart';
+
+import 'accounts_tab.dart';
+import 'bills_tab.dart';
+import 'expenses_tab.dart';
+import 'overview_tab.dart';
+import 'purchase_orders_tab.dart';
+
+import '../services/bills_service.dart';
+import '../services/expenses_service.dart';
+import '../services/purchase_orders_service.dart';
+import '../widgets/add_expense_dialog.dart';
+import '../widgets/add_purchase_order_dialog.dart';
+import '../widgets/create_bill_dialog.dart';
+import '../widgets/post_dialog.dart';
 import '../widgets/app_logo.dart';
-import '../widgets/home_tab_placeholder.dart';
-import 'purchase_orders/purchase_order_list.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,6 +29,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   late final TabController _controller;
   late final List<_HomeTab> _tabs;
+  final GlobalKey<PurchaseOrdersTabState> _purchaseOrdersTabKey =
+      GlobalKey<PurchaseOrdersTabState>();
+  final GlobalKey<ExpensesTabState> _expensesTabKey =
+      GlobalKey<ExpensesTabState>();
+  final GlobalKey<BillsTabState> _billsTabKey = GlobalKey<BillsTabState>();
 
   @override
   void initState() {
@@ -24,44 +41,32 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _tabs = [
       _HomeTab(
         title: 'Purchase Orders',
+        icon: Icons.shopping_bag_outlined,
+        builder: (_, __) => PurchaseOrdersTab(key: _purchaseOrdersTabKey),
+      ),
+      _HomeTab(
+        title: 'Expenses',
+        icon: Icons.payments_outlined,
+        builder: (_, __) => ExpensesTab(key: _expensesTabKey),
+      ),
+      _HomeTab(
+        title: 'Bills',
         icon: Icons.receipt_long_outlined,
-        builder: (_, __) => const PurchaseOrderList(),
+        builder: (_, __) => BillsTab(key: _billsTabKey),
       ),
       _HomeTab(
-        title: 'Goods Receipt',
-        icon: Icons.archive_outlined,
-        builder: (_, __) => const HomeTabPlaceholder(
-          title: 'Goods Receipt',
-          icon: Icons.archive_outlined,
-        ),
-      ),
-      _HomeTab(
-        title: 'Loss & Adjustment',
-        icon: Icons.tune_outlined,
-        builder: (_, __) => const HomeTabPlaceholder(
-          title: 'Loss & Adjustment',
-          icon: Icons.tune_outlined,
-        ),
-      ),
-      _HomeTab(
-        title: 'Items',
-        icon: Icons.grid_view_outlined,
-        builder: (_, __) => const HomeTabPlaceholder(
-          title: 'Items',
-          icon: Icons.grid_view_outlined,
-        ),
+        title: 'Accounts',
+        icon: Icons.account_balance_outlined,
+        builder: (_, __) => const AccountsTab(),
       ),
       _HomeTab(
         title: 'Overview',
         icon: Icons.dashboard_outlined,
-        builder: (_, __) => const HomeTabPlaceholder(
-          title: 'Overview',
-          icon: Icons.dashboard_outlined,
-        ),
+        builder: (_, appState) => OverviewTab(appState: appState),
       ),
     ];
     _controller = TabController(
-        length: _tabs.length, vsync: this, initialIndex: 0)
+        length: _tabs.length, vsync: this, initialIndex: _tabs.length - 1)
       ..addListener(_handleTabSelection);
   }
 
@@ -79,20 +84,78 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Future<void> _openAddModal(BuildContext context, String tabTitle) async {
-    // Placeholder for add modal
-    await showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Create $tabTitle'),
-        content: const Text('Add functionality to create items here.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+    if (_controller.index == 0) {
+      final createdOrder = await showDialog<PurchaseOrder>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AddPurchaseOrderDialog(),
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      if (createdOrder != null) {
+        final normalizedNumber = createdOrder.number.trim();
+        final orderLabel =
+            normalizedNumber.isEmpty || normalizedNumber == '—'
+                ? createdOrder.name
+                : normalizedNumber;
+        _purchaseOrdersTabKey.currentState?.insertCreatedPurchaseOrder(
+          createdOrder,
+          successMessage: orderLabel.trim().isEmpty
+              ? 'Purchase order created.'
+              : 'Purchase order $orderLabel created.',
+        );
+      }
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    switch (_controller.index) {
+      case 1:
+        final createdExpense = await showDialog<Expense>(
+          context: context,
+          builder: (context) => const AddExpenseDialog(),
+        );
+
+        if (createdExpense != null && mounted) {
+          _expensesTabKey.currentState?.insertCreatedExpense(createdExpense);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Expense created successfully.')),
+          );
+        }
+        break;
+      case 2:
+        final createdBill = await showDialog<Bill>(
+          context: context,
+          builder: (context) => const CreateBillDialog(),
+        );
+
+        if (createdBill != null && mounted) {
+          _billsTabKey.currentState?.insertCreatedBill(createdBill);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Bill created successfully.')),
+          );
+        }
+        break;
+      default:
+        await showDialog<void>(
+          context: context,
+          builder: (context) => PostDialog(
+            title: 'Create $tabTitle',
+            apiPath: 'https://crm.kokonuts.my',
+            description:
+                'Add the correct endpoint and payload for this tab when ready.',
+            samplePayload: const {
+              'example': 'value',
+            },
           ),
-        ],
-      ),
-    );
+        );
+    }
   }
 
   @override
@@ -102,6 +165,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
     final AppState scopedAppState = AppStateScope.of(context);
 
+    final bool isOverviewTabSelected = _controller.index == _tabs.length - 1;
     final _HomeTab currentTab = _tabs[_controller.index];
     final isCompact = MediaQuery.sizeOf(context).width < 600;
 
@@ -160,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               children: _tabs
                   .map(
                     (tab) => tab.builder?.call(context, scopedAppState) ??
-                        HomeTabPlaceholder(
+                        _HomeTabPlaceholder(
                           title: tab.title,
                           icon: tab.icon,
                         ),
@@ -187,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 .toList(growable: false),
           ),
         ),
-        floatingActionButton: currentTab.title == 'Purchase Orders'
+        floatingActionButton: isOverviewTabSelected
             ? null
             : FloatingActionButton(
                 tooltip: 'Add ${currentTab.title}',
@@ -353,4 +417,40 @@ class _HomeTab {
   final String title;
   final IconData icon;
   final Widget Function(BuildContext context, AppState appState)? builder;
+}
+
+class _HomeTabPlaceholder extends StatelessWidget {
+  const _HomeTabPlaceholder({required this.title, required this.icon});
+
+  final String title;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 72, color: theme.colorScheme.primary),
+            const SizedBox(height: 24),
+            Text(
+              title,
+              style: theme.textTheme.headlineSmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Content for the $title tab will appear here.',
+              style: theme.textTheme.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

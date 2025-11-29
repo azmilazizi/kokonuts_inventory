@@ -160,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Sign in to continue to Kokonuts Inventory.',
+                    'Sign in to continue to Kokonuts Bookkeeping.',
                     style: theme.textTheme.bodyMedium,
                     textAlign: TextAlign.center,
                   ),

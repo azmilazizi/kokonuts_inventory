@@ -16,19 +16,19 @@ void main() {
   final authService = AuthService(sessionManager: sessionManager);
   final appState = AppState(authService: authService, sessionManager: sessionManager);
 
-  runApp(KokonutsInventoryApp(appState: appState));
+  runApp(KokonutsBookkeepingApp(appState: appState));
 }
 
-class KokonutsInventoryApp extends StatefulWidget {
-  const KokonutsInventoryApp({super.key, required this.appState});
+class KokonutsBookkeepingApp extends StatefulWidget {
+  const KokonutsBookkeepingApp({super.key, required this.appState});
 
   final AppState appState;
 
   @override
-  State<KokonutsInventoryApp> createState() => _KokonutsInventoryAppState();
+  State<KokonutsBookkeepingApp> createState() => _KokonutsBookkeepingAppState();
 }
 
-class _KokonutsInventoryAppState extends State<KokonutsInventoryApp> {
+class _KokonutsBookkeepingAppState extends State<KokonutsBookkeepingApp> {
   late final AppState _appState = widget.appState;
 
   @override
@@ -45,7 +45,7 @@ class _KokonutsInventoryAppState extends State<KokonutsInventoryApp> {
         animation: _appState,
         builder: (context, _) {
           return MaterialApp(
-            title: 'Kokonuts Inventory',
+            title: 'Kokonuts Bookkeeping',
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(
