@@ -4,6 +4,7 @@ import '../../app/app_state.dart';
 import '../../app/app_state_scope.dart';
 import '../../models/purchase_order.dart';
 import '../../services/purchase_order_service.dart';
+import '../../services/authenticated_http_client.dart';
 import 'purchase_order_detail.dart';
 
 class PurchaseOrderList extends StatefulWidget {
@@ -38,7 +39,20 @@ class _PurchaseOrderListState extends State<PurchaseOrderList> {
 
     try {
       final appState = AppStateScope.of(context);
-      final service = PurchaseOrderService(appState.authenticatedHttpClient);
+
+      final client = AuthenticatedHttpClient(
+        tokenProvider: () async {
+          final token = await appState.getValidAuthToken();
+          if (token == null) return null;
+          return AuthTokenPayload(
+            authorizationToken: token,
+            authtoken: token,
+            rawAuthtoken: token,
+          );
+        },
+      );
+
+      final service = PurchaseOrderService(client);
       final response = await service.getPurchaseOrders(page: _currentPage, limit: _limit);
 
       if (mounted) {
