@@ -22,27 +22,43 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     super.initState();
     _tabs = [
       _HomeTab(
-        title: 'Dashboard',
+        title: 'Purchase Orders',
+        icon: Icons.receipt_long_outlined,
+        builder: (_, __) => const HomeTabPlaceholder(
+          title: 'Purchase Orders',
+          icon: Icons.receipt_long_outlined,
+        ),
+      ),
+      _HomeTab(
+        title: 'Goods Receipt',
+        icon: Icons.archive_outlined,
+        builder: (_, __) => const HomeTabPlaceholder(
+          title: 'Goods Receipt',
+          icon: Icons.archive_outlined,
+        ),
+      ),
+      _HomeTab(
+        title: 'Loss & Adjustment',
+        icon: Icons.tune_outlined,
+        builder: (_, __) => const HomeTabPlaceholder(
+          title: 'Loss & Adjustment',
+          icon: Icons.tune_outlined,
+        ),
+      ),
+      _HomeTab(
+        title: 'Items',
+        icon: Icons.grid_view_outlined,
+        builder: (_, __) => const HomeTabPlaceholder(
+          title: 'Items',
+          icon: Icons.grid_view_outlined,
+        ),
+      ),
+      _HomeTab(
+        title: 'Overview',
         icon: Icons.dashboard_outlined,
         builder: (_, __) => const HomeTabPlaceholder(
-          title: 'Dashboard',
+          title: 'Overview',
           icon: Icons.dashboard_outlined,
-        ),
-      ),
-      _HomeTab(
-        title: 'Inventory',
-        icon: Icons.inventory_2_outlined,
-        builder: (_, __) => const HomeTabPlaceholder(
-          title: 'Inventory',
-          icon: Icons.inventory_2_outlined,
-        ),
-      ),
-      _HomeTab(
-        title: 'Orders',
-        icon: Icons.shopping_cart_outlined,
-        builder: (_, __) => const HomeTabPlaceholder(
-          title: 'Orders',
-          icon: Icons.shopping_cart_outlined,
         ),
       ),
     ];
