@@ -6,7 +6,6 @@ class PurchaseOrder {
   final String status;
   final DateTime date;
   final DateTime? deliveryDate;
-  // Add other fields that might be useful for details
   final String? description;
   final double totalAmount;
 
@@ -20,4 +19,23 @@ class PurchaseOrder {
     this.description,
     required this.totalAmount,
   });
+
+  factory PurchaseOrder.fromJson(Map<String, dynamic> json) {
+    return PurchaseOrder(
+      id: json['id']?.toString() ?? '',
+      poNumber: json['po_number'] ?? '',
+      vendorName: json['vendor_name'] ?? 'Unknown Vendor',
+      status: json['status'] ?? 'Unknown',
+      date: json['date'] != null
+          ? DateTime.tryParse(json['date']) ?? DateTime.now()
+          : DateTime.now(),
+      deliveryDate: json['delivery_date'] != null
+          ? DateTime.tryParse(json['delivery_date'])
+          : null,
+      description: json['description'],
+      totalAmount: (json['total_amount'] is num)
+          ? (json['total_amount'] as num).toDouble()
+          : 0.0,
+    );
+  }
 }
