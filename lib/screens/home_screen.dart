@@ -5,6 +5,7 @@ import '../app/app_state.dart';
 import '../app/app_state_scope.dart';
 import '../widgets/app_logo.dart';
 import '../widgets/home_tab_placeholder.dart';
+import 'purchase_orders/purchase_order_list.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -24,10 +25,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       _HomeTab(
         title: 'Purchase Orders',
         icon: Icons.receipt_long_outlined,
-        builder: (_, __) => const HomeTabPlaceholder(
-          title: 'Purchase Orders',
-          icon: Icons.receipt_long_outlined,
-        ),
+        builder: (_, __) => const PurchaseOrderList(),
       ),
       _HomeTab(
         title: 'Goods Receipt',
@@ -189,11 +187,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 .toList(growable: false),
           ),
         ),
-        floatingActionButton: FloatingActionButton(
-          tooltip: 'Add ${currentTab.title}',
-          onPressed: () => _openAddModal(context, currentTab.title),
-          child: const Icon(Icons.add),
-        ),
+        floatingActionButton: currentTab.title == 'Purchase Orders'
+            ? null
+            : FloatingActionButton(
+                tooltip: 'Add ${currentTab.title}',
+                onPressed: () => _openAddModal(context, currentTab.title),
+                child: const Icon(Icons.add),
+              ),
       ),
     );
   }
