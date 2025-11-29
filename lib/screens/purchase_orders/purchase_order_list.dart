@@ -46,8 +46,8 @@ class _PurchaseOrderListState extends State<PurchaseOrderList> {
           if (token == null) return null;
           return AuthTokenPayload(
             authorizationToken: token,
-            authtoken: token,
-            rawAuthtoken: token,
+            authtoken: '',
+            rawAuthtoken: '',
           );
         },
       );
