@@ -168,8 +168,8 @@ class PurchaseOrderService {
     late http.Response response;
     try {
       response = await _client.get(uri, headers: requestHeaders);
-    } catch (_) {
-      throw PurchaseOrderException('Unable to reach the server. Please try again later.');
+    } catch (e) {
+      throw PurchaseOrderException('Unable to reach the server. Details: $e');
     }
 
     if (response.statusCode != 200) {
