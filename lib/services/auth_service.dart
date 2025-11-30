@@ -35,11 +35,14 @@ class AuthService {
     try {
       response = await _client.post(
         Uri.parse(_loginUrl),
-        headers: const {'Content-Type': 'application/json'},
+        headers: const {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
         body: jsonEncode({'username': username, 'password': password}),
       );
-    } catch (_) {
-      throw const AuthException('Unable to reach the server. Please try again later.');
+    } catch (e) {
+      throw AuthException('Unable to reach the server. Details: $e');
     }
 
     if (response.statusCode == 200) {
