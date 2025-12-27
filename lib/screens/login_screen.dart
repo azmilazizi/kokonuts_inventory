@@ -59,10 +59,6 @@ class _LoginScreenState extends State<LoginScreen> {
       final rawUsername = _usernameController.text.trim();
       final normalizedUsername =
           rawUsername.endsWith('@kokonuts.my') ? rawUsername : '${rawUsername}@kokonuts.my';
-      if (normalizedUsername != _usernameController.text) {
-        _usernameController.text = normalizedUsername;
-        _usernameController.selection = TextSelection.collapsed(offset: normalizedUsername.length);
-      }
       await appState.login(
         username: normalizedUsername,
         password: _passwordController.text,
