@@ -596,7 +596,7 @@ class _InventoryHistoryRow extends StatelessWidget {
           _DataCell(_displayValue(entry.commodityName), flex: _columnFlex[2]),
           _DataCell(_displayValue(entry.warehouseCode), flex: _columnFlex[3]),
           _DataCell(_displayValue(entry.warehouseName), flex: _columnFlex[4]),
-          _DataCell(_displayValue(entry.voucherDate), flex: _columnFlex[5]),
+          _DataCell(_displayVoucherDate(entry.voucherDate), flex: _columnFlex[5]),
           _DataCell(_displayValue(entry.openingStock), flex: _columnFlex[6]),
           _DataCell(_displayValue(entry.closingStock), flex: _columnFlex[7]),
           _DataCell(_displayValue(entry.lotNumber), flex: _columnFlex[8]),
@@ -608,6 +608,30 @@ class _InventoryHistoryRow extends StatelessWidget {
   String _displayValue(String value) {
     final trimmed = value.trim();
     return trimmed.isEmpty ? '—' : trimmed;
+  }
+
+  String _displayVoucherDate(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return '—';
+    }
+
+    final dateMatch = RegExp(r'^\d{4}-\d{2}-\d{2}').firstMatch(trimmed);
+    if (dateMatch != null) {
+      return dateMatch.group(0)!;
+    }
+
+    final separatorIndex = trimmed.indexOf('T');
+    if (separatorIndex > 0) {
+      return trimmed.substring(0, separatorIndex);
+    }
+
+    final spaceIndex = trimmed.indexOf(' ');
+    if (spaceIndex > 0) {
+      return trimmed.substring(0, spaceIndex);
+    }
+
+    return trimmed;
   }
 }
 
