@@ -15,14 +15,27 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _usernameFocusNode = FocusNode();
   bool _isSubmitting = false;
   String? _error;
   Map<String, String> _fieldErrors = {};
 
   @override
+  void initState() {
+    super.initState();
+    _usernameFocusNode.addListener(() {
+      setState(() {});
+    });
+    _usernameController.addListener(() {
+      setState(() {});
+    });
+  }
+
+  @override
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
+    _usernameFocusNode.dispose();
     super.dispose();
   }
 
@@ -167,10 +180,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 32),
                   TextFormField(
                     controller: _usernameController,
+                    focusNode: _usernameFocusNode,
                     autovalidateMode: AutovalidateMode.onUserInteraction,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Username',
-                      border: OutlineInputBorder(),
+                      border: const OutlineInputBorder(),
+                      suffixText: _usernameFocusNode.hasFocus || _usernameController.text.trim().isNotEmpty
+                          ? '@kokonuts.my'
+                          : null,
+                      suffixStyle: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     textInputAction: TextInputAction.next,
                     onChanged: (_) {
