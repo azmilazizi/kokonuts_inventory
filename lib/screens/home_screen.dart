@@ -41,22 +41,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _tabs = [
       _HomeTab(
         title: 'Pending Receive',
-        icon: Icons.shopping_bag_outlined,
+        icon: Icons.local_shipping_outlined,
         builder: (_, __) => PurchaseOrdersTab(key: _purchaseOrdersTabKey),
       ),
       _HomeTab(
         title: 'Inventory',
-        icon: Icons.payments_outlined,
+        icon: Icons.inventory_2_outlined,
         builder: (_, __) => ExpensesTab(key: _expensesTabKey),
       ),
       _HomeTab(
         title: 'Stock Adjustment',
-        icon: Icons.receipt_long_outlined,
+        icon: Icons.tune_outlined,
         builder: (_, __) => BillsTab(key: _billsTabKey),
       ),
       _HomeTab(
-        title: 'Audit Log',
-        icon: Icons.account_balance_outlined,
+        title: 'Inventory History',
+        icon: Icons.history_outlined,
         builder: (_, __) => const AccountsTab(),
       ),
       _HomeTab(
