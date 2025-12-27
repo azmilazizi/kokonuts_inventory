@@ -330,6 +330,35 @@ class WarehouseHistoryEntry {
   final String closingStock;
   final String lotNumber;
 
+  String get warehouseDisplay {
+    final codeValue = warehouseCode.trim();
+    final nameValue = warehouseName.trim();
+    if (codeValue.isEmpty && nameValue.isEmpty) {
+      return '';
+    }
+    if (codeValue.isEmpty) {
+      return nameValue;
+    }
+    if (nameValue.isEmpty) {
+      return codeValue;
+    }
+    return '${codeValue}_$nameValue';
+  }
+
+  String get stockLeftDisplay {
+    if (openingStock.trim().isEmpty && closingStock.trim().isEmpty) {
+      return '';
+    }
+    final total = _parseNumber(openingStock) + _parseNumber(closingStock);
+    if (total % 1 == 0) {
+      return total.toInt().toString();
+    }
+    return total.toString();
+  }
+
+  double get stockLeftValue =>
+      _parseNumber(openingStock) + _parseNumber(closingStock);
+
   static String? _readString(Map<String, dynamic> map, List<String> keys) {
     for (final key in keys) {
       final value = map[key];
@@ -374,6 +403,11 @@ class WarehouseHistoryEntry {
       return _readString(value, keys);
     }
     return null;
+  }
+
+  static double _parseNumber(String value) {
+    final normalized = value.replaceAll(',', '').trim();
+    return double.tryParse(normalized) ?? 0;
   }
 
 }

@@ -9,11 +9,11 @@ enum InventoryHistorySortColumn {
   code,
   type,
   commodityName,
-  warehouseCode,
-  warehouseName,
+  warehouse,
   voucherDate,
   openingStock,
-  closingStock,
+  additionDeduction,
+  stockLeft,
   lotNumber,
 }
 
@@ -303,11 +303,11 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab> {
     return entry.code.toLowerCase().contains(query) ||
         entry.type.toLowerCase().contains(query) ||
         entry.commodityName.toLowerCase().contains(query) ||
-        entry.warehouseCode.toLowerCase().contains(query) ||
-        entry.warehouseName.toLowerCase().contains(query) ||
+        entry.warehouseDisplay.toLowerCase().contains(query) ||
         entry.voucherDate.toLowerCase().contains(query) ||
         entry.openingStock.toLowerCase().contains(query) ||
         entry.closingStock.toLowerCase().contains(query) ||
+        entry.stockLeftDisplay.toLowerCase().contains(query) ||
         entry.lotNumber.toLowerCase().contains(query);
   }
 
@@ -329,16 +329,18 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab> {
         return a.type.toLowerCase().compareTo(b.type.toLowerCase());
       case InventoryHistorySortColumn.commodityName:
         return a.commodityName.toLowerCase().compareTo(b.commodityName.toLowerCase());
-      case InventoryHistorySortColumn.warehouseCode:
-        return a.warehouseCode.toLowerCase().compareTo(b.warehouseCode.toLowerCase());
-      case InventoryHistorySortColumn.warehouseName:
-        return a.warehouseName.toLowerCase().compareTo(b.warehouseName.toLowerCase());
+      case InventoryHistorySortColumn.warehouse:
+        return a.warehouseDisplay.toLowerCase().compareTo(
+              b.warehouseDisplay.toLowerCase(),
+            );
       case InventoryHistorySortColumn.voucherDate:
         return _compareDates(a.voucherDate, b.voucherDate);
       case InventoryHistorySortColumn.openingStock:
         return _compareNumbers(a.openingStock, b.openingStock);
-      case InventoryHistorySortColumn.closingStock:
+      case InventoryHistorySortColumn.additionDeduction:
         return _compareNumbers(a.closingStock, b.closingStock);
+      case InventoryHistorySortColumn.stockLeft:
+        return a.stockLeftValue.compareTo(b.stockLeftValue);
       case InventoryHistorySortColumn.lotNumber:
         return a.lotNumber.toLowerCase().compareTo(b.lotNumber.toLowerCase());
     }
@@ -486,6 +488,7 @@ class _InventoryHistoryHeader extends StatelessWidget {
             label: 'Type',
             flex: _columnFlex[1],
             theme: theme,
+            textAlign: TextAlign.center,
             isActive: sortColumn == InventoryHistorySortColumn.type,
             ascending: sortAscending,
             onTap: () => onSort(InventoryHistorySortColumn.type),
@@ -499,44 +502,48 @@ class _InventoryHistoryHeader extends StatelessWidget {
             onTap: () => onSort(InventoryHistorySortColumn.commodityName),
           ),
           SortableHeaderCell(
-            label: 'Warehouse Code',
+            label: 'Warehouse',
             flex: _columnFlex[3],
             theme: theme,
-            isActive: sortColumn == InventoryHistorySortColumn.warehouseCode,
+            isActive: sortColumn == InventoryHistorySortColumn.warehouse,
             ascending: sortAscending,
-            onTap: () => onSort(InventoryHistorySortColumn.warehouseCode),
-          ),
-          SortableHeaderCell(
-            label: 'Warehouse Name',
-            flex: _columnFlex[4],
-            theme: theme,
-            isActive: sortColumn == InventoryHistorySortColumn.warehouseName,
-            ascending: sortAscending,
-            onTap: () => onSort(InventoryHistorySortColumn.warehouseName),
+            onTap: () => onSort(InventoryHistorySortColumn.warehouse),
           ),
           SortableHeaderCell(
             label: 'Voucher Date',
-            flex: _columnFlex[5],
+            flex: _columnFlex[4],
             theme: theme,
+            textAlign: TextAlign.center,
             isActive: sortColumn == InventoryHistorySortColumn.voucherDate,
             ascending: sortAscending,
             onTap: () => onSort(InventoryHistorySortColumn.voucherDate),
           ),
           SortableHeaderCell(
             label: 'Opening Stock',
-            flex: _columnFlex[6],
+            flex: _columnFlex[5],
             theme: theme,
+            textAlign: TextAlign.center,
             isActive: sortColumn == InventoryHistorySortColumn.openingStock,
             ascending: sortAscending,
             onTap: () => onSort(InventoryHistorySortColumn.openingStock),
           ),
           SortableHeaderCell(
-            label: 'Closing Stock',
+            label: 'Addition/Deduction',
+            flex: _columnFlex[6],
+            theme: theme,
+            textAlign: TextAlign.center,
+            isActive: sortColumn == InventoryHistorySortColumn.additionDeduction,
+            ascending: sortAscending,
+            onTap: () => onSort(InventoryHistorySortColumn.additionDeduction),
+          ),
+          SortableHeaderCell(
+            label: 'Stock Left',
             flex: _columnFlex[7],
             theme: theme,
-            isActive: sortColumn == InventoryHistorySortColumn.closingStock,
+            textAlign: TextAlign.center,
+            isActive: sortColumn == InventoryHistorySortColumn.stockLeft,
             ascending: sortAscending,
-            onTap: () => onSort(InventoryHistorySortColumn.closingStock),
+            onTap: () => onSort(InventoryHistorySortColumn.stockLeft),
           ),
           SortableHeaderCell(
             label: 'Lot No Number',
@@ -592,13 +599,33 @@ class _InventoryHistoryRow extends StatelessWidget {
       child: Row(
         children: [
           _DataCell(_displayValue(entry.code), flex: _columnFlex[0]),
-          _TypePillCell(entry.type, flex: _columnFlex[1]),
+          _TypePillCell(
+            entry.type,
+            flex: _columnFlex[1],
+            alignment: Alignment.center,
+          ),
           _DataCell(_displayValue(entry.commodityName), flex: _columnFlex[2]),
-          _DataCell(_displayValue(entry.warehouseCode), flex: _columnFlex[3]),
-          _DataCell(_displayValue(entry.warehouseName), flex: _columnFlex[4]),
-          _DataCell(_displayVoucherDate(entry.voucherDate), flex: _columnFlex[5]),
-          _DataCell(_displayValue(entry.openingStock), flex: _columnFlex[6]),
-          _DataCell(_displayValue(entry.closingStock), flex: _columnFlex[7]),
+          _DataCell(_displayValue(entry.warehouseDisplay), flex: _columnFlex[3]),
+          _DataCell(
+            _displayVoucherDate(entry.voucherDate),
+            flex: _columnFlex[4],
+            textAlign: TextAlign.center,
+          ),
+          _DataCell(
+            _displayValue(entry.openingStock),
+            flex: _columnFlex[5],
+            textAlign: TextAlign.center,
+          ),
+          _DataCell(
+            _displayValue(entry.closingStock),
+            flex: _columnFlex[6],
+            textAlign: TextAlign.center,
+          ),
+          _DataCell(
+            _displayValue(entry.stockLeftDisplay),
+            flex: _columnFlex[7],
+            textAlign: TextAlign.center,
+          ),
           _DataCell(_displayValue(entry.lotNumber), flex: _columnFlex[8]),
         ],
       ),
@@ -715,10 +742,12 @@ class _TypePillCell extends StatelessWidget {
   const _TypePillCell(
     this.value, {
     required this.flex,
+    this.alignment = Alignment.centerLeft,
   });
 
   final String value;
   final int flex;
+  final Alignment alignment;
 
   static const Map<String, String> _labels = {
     '1': 'Goods Received',
@@ -742,7 +771,7 @@ class _TypePillCell extends StatelessWidget {
     return Expanded(
       flex: flex,
       child: Align(
-        alignment: Alignment.centerLeft,
+        alignment: alignment,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
