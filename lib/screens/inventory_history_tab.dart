@@ -592,7 +592,7 @@ class _InventoryHistoryRow extends StatelessWidget {
       child: Row(
         children: [
           _DataCell(_displayValue(entry.code), flex: _columnFlex[0]),
-          _DataCell(_displayValue(entry.type), flex: _columnFlex[1]),
+          _TypePillCell(entry.type, flex: _columnFlex[1]),
           _DataCell(_displayValue(entry.commodityName), flex: _columnFlex[2]),
           _DataCell(_displayValue(entry.warehouseCode), flex: _columnFlex[3]),
           _DataCell(_displayValue(entry.warehouseName), flex: _columnFlex[4]),
@@ -685,4 +685,101 @@ class _DataCell extends StatelessWidget {
       ),
     );
   }
+}
+
+class _TypePillCell extends StatelessWidget {
+  const _TypePillCell(
+    this.value, {
+    required this.flex,
+  });
+
+  final String value;
+  final int flex;
+
+  static const Map<String, String> _labels = {
+    '1': 'Goods Received',
+    '2': 'Goods Delivered',
+    '3': 'Stock Adjustment',
+    '4': 'Internal Delivery',
+    'stock_import': 'Goods Received',
+    'stock_export': 'Goods Delivered',
+    'lost_adjustment': 'Stock Adjustment',
+    'internal_delivery_note': 'Internal Delivery',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final normalized = value.trim().toLowerCase();
+    final label = _labels[normalized] ?? value.trim();
+    final colors = _pillColors(theme, normalized);
+    final display = label.isEmpty ? '—' : label;
+
+    return Expanded(
+      flex: flex,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: colors.background,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            display,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colors.foreground,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  _PillColors _pillColors(ThemeData theme, String normalized) {
+    switch (normalized) {
+      case '1':
+      case 'stock_import':
+        return _PillColors(
+          background: const Color(0xFFE6F6EE),
+          foreground: const Color(0xFF147A42),
+        );
+      case '2':
+      case 'stock_export':
+        return _PillColors(
+          background: const Color(0xFFFCEAEA),
+          foreground: const Color(0xFFB42318),
+        );
+      case '3':
+      case 'lost_adjustment':
+        return _PillColors(
+          background: const Color(0xFFFFF2DB),
+          foreground: const Color(0xFFB54708),
+        );
+      case '4':
+      case 'internal_delivery_note':
+        return _PillColors(
+          background: const Color(0xFFE8EEFF),
+          foreground: const Color(0xFF3448C5),
+        );
+      default:
+        return _PillColors(
+          background: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+          foreground: theme.colorScheme.onSurfaceVariant,
+        );
+    }
+  }
+}
+
+class _PillColors {
+  const _PillColors({
+    required this.background,
+    required this.foreground,
+  });
+
+  final Color background;
+  final Color foreground;
 }
