@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import '../app/app_state.dart';
 import '../app/app_state_scope.dart';
 
-import 'accounts_tab.dart';
+import 'inventory_history_tab.dart';
 import 'bills_tab.dart';
 import 'expenses_tab.dart';
 import 'overview_tab.dart';
@@ -57,7 +57,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       _HomeTab(
         title: 'Inventory History',
         icon: Icons.history_outlined,
-        builder: (_, __) => const AccountsTab(),
+        builder: (_, __) => const InventoryHistoryTab(),
       ),
       _HomeTab(
         title: 'Overview',
