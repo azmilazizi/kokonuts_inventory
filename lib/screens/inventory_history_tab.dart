@@ -721,14 +721,14 @@ class _TypePillCell extends StatelessWidget {
   final int flex;
 
   static const Map<String, String> _labels = {
-    '1': 'stock_import',
-    '2': 'stock_export',
-    '3': 'lost_adjustment',
-    '4': 'internal_delivery_note',
-    'stock_import': 'stock_import',
-    'stock_export': 'stock_export',
-    'lost_adjustment': 'lost_adjustment',
-    'internal_delivery_note': 'internal_delivery_note',
+    '1': 'Goods Received',
+    '2': 'Goods Delivered',
+    '3': 'Stock Adjustment',
+    '4': 'Internal Delivery',
+    'stock_import': 'Goods Received',
+    'stock_export': 'Goods Delivered',
+    'lost_adjustment': 'Stock Adjustment',
+    'internal_delivery_note': 'Internal Delivery',
   };
 
   @override
