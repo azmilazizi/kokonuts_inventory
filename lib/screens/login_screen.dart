@@ -26,6 +26,9 @@ class _LoginScreenState extends State<LoginScreen> {
     _usernameFocusNode.addListener(() {
       setState(() {});
     });
+    _usernameController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -182,7 +185,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: InputDecoration(
                       labelText: 'Username',
                       border: const OutlineInputBorder(),
-                      suffixText: _usernameFocusNode.hasFocus ? '@kokonuts.my' : null,
+                      suffixText: _usernameFocusNode.hasFocus || _usernameController.text.trim().isNotEmpty
+                          ? '@kokonuts.my'
+                          : null,
                       suffixStyle: theme.textTheme.bodyMedium?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
