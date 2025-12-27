@@ -63,6 +63,7 @@ class WarehouseHistoryService {
       if (source is Map<String, dynamic>) {
         if (_looksLikeHistoryEntry(source)) {
           entries.add(source);
+          return;
         }
         for (final value in source.values) {
           collect(value);
@@ -75,15 +76,25 @@ class WarehouseHistoryService {
   }
 
   bool _looksLikeHistoryEntry(Map<String, dynamic> map) {
-    const keys = [
-      'status',
-      'commodity',
-      'warehouse',
+    const requiredKeys = [
       'date_add',
       'old_quantity',
       'quantity',
       'lot_number',
       'lotNumber',
+    ];
+
+    if (!map.containsKey('status')) {
+      return false;
+    }
+
+    if (!requiredKeys.any(map.containsKey)) {
+      return false;
+    }
+
+    const optionalKeys = [
+      'commodity',
+      'warehouse',
       'goods_receipt',
       'goodsReceipt',
       'goods_delivery',
@@ -92,10 +103,9 @@ class WarehouseHistoryService {
       'internalDeliveryNote',
       'loss_adjustment',
       'lossAdjustment',
-      'code',
     ];
 
-    return keys.any(map.containsKey);
+    return optionalKeys.any(map.containsKey) || requiredKeys.any(map.containsKey);
   }
 
   PaginationInfo _resolvePagination(
@@ -229,25 +239,45 @@ class WarehouseHistoryEntry {
 
     final status = readString(const ['status', 'state']);
     final normalizedStatus = status.trim().toLowerCase();
-    final code = switch (normalizedStatus) {
-      'goods_receipt' =>
-        readNestedString('goods_receipt', const ['code']).isNotEmpty
-            ? readNestedString('goods_receipt', const ['code'])
-            : readNestedString('goodsReceipt', const ['code']),
-      'goods_delivery' =>
-        readNestedString('goods_delivery', const ['code']).isNotEmpty
-            ? readNestedString('goods_delivery', const ['code'])
-            : readNestedString('goodsDelivery', const ['code']),
-      'internal_delivery_note' =>
-        readNestedString('internal_delivery_note', const ['code']).isNotEmpty
-            ? readNestedString('internal_delivery_note', const ['code'])
-            : readNestedString('internalDeliveryNote', const ['code']),
-      'loss_adjustment' =>
-        readNestedString('loss_adjustment', const ['code']).isNotEmpty
-            ? readNestedString('loss_adjustment', const ['code'])
-            : readNestedString('lossAdjustment', const ['code']),
-      _ => '',
-    };
+    final nestedCodes = [
+      readNestedString('goods_receipt', const ['code']),
+      readNestedString('goodsReceipt', const ['code']),
+      readNestedString('goods_delivery', const ['code']),
+      readNestedString('goodsDelivery', const ['code']),
+      readNestedString('internal_delivery_note', const ['code']),
+      readNestedString('internalDeliveryNote', const ['code']),
+      readNestedString('loss_adjustment', const ['code']),
+      readNestedString('lossAdjustment', const ['code']),
+    ];
+
+    String resolveCode() {
+      switch (normalizedStatus) {
+        case 'goods_receipt':
+          return readNestedString('goods_receipt', const ['code']).isNotEmpty
+              ? readNestedString('goods_receipt', const ['code'])
+              : readNestedString('goodsReceipt', const ['code']);
+        case 'goods_delivery':
+          return readNestedString('goods_delivery', const ['code']).isNotEmpty
+              ? readNestedString('goods_delivery', const ['code'])
+              : readNestedString('goodsDelivery', const ['code']);
+        case 'internal_delivery_note':
+          return readNestedString('internal_delivery_note', const ['code']).isNotEmpty
+              ? readNestedString('internal_delivery_note', const ['code'])
+              : readNestedString('internalDeliveryNote', const ['code']);
+        case 'loss_adjustment':
+          return readNestedString('loss_adjustment', const ['code']).isNotEmpty
+              ? readNestedString('loss_adjustment', const ['code'])
+              : readNestedString('lossAdjustment', const ['code']);
+      }
+      for (final candidate in nestedCodes) {
+        if (candidate.trim().isNotEmpty) {
+          return candidate;
+        }
+      }
+      return '';
+    }
+
+    final code = resolveCode();
 
     return WarehouseHistoryEntry(
       id: readString(const ['id', 'history_id', 'warehouse_history_id']),
