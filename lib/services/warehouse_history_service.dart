@@ -75,38 +75,24 @@ class WarehouseHistoryService {
   }
 
   bool _looksLikeHistoryEntry(Map<String, dynamic> map) {
-    final id = _readString(map, const [
-      'id',
-      'history_id',
-      'warehouse_history_id',
-      'warehouseHistoryId',
-    ]);
-    if (id == null) {
-      return false;
-    }
-
     const keys = [
-      'supplier_name',
-      'supplierName',
-      'purchase_order',
-      'purchaseOrder',
-      'voucher_date',
-      'voucherDate',
-      'goods_value',
-      'goodsValue',
-      'item_code',
-      'itemCode',
-      'warehouse_code',
-      'warehouseCode',
-      'opening_stock',
-      'openingStock',
-      'closing_stock',
-      'closingStock',
+      'status',
+      'commodity',
+      'warehouse',
+      'date_add',
+      'old_quantity',
+      'quantity',
       'lot_number',
       'lotNumber',
-      'quantity_sold',
-      'quantitySold',
-      'status',
+      'goods_receipt',
+      'goodsReceipt',
+      'goods_delivery',
+      'goodsDelivery',
+      'internal_delivery_note',
+      'internalDeliveryNote',
+      'loss_adjustment',
+      'lossAdjustment',
+      'code',
     ];
 
     return keys.any(map.containsKey);
@@ -224,90 +210,95 @@ class PaginationInfo {
 class WarehouseHistoryEntry {
   WarehouseHistoryEntry({
     required this.id,
-    required this.supplierName,
-    required this.purchaseOrder,
+    required this.code,
+    required this.type,
+    required this.commodityName,
     required this.voucherDate,
-    required this.goodsValue,
-    required this.itemCode,
     required this.warehouseCode,
-    required this.voucherDateSecondary,
+    required this.warehouseName,
     required this.openingStock,
     required this.closingStock,
     required this.lotNumber,
-    required this.quantitySold,
-    required this.status,
   });
 
   factory WarehouseHistoryEntry.fromJson(Map<String, dynamic> json) {
     String readString(List<String> keys) => _readString(json, keys) ?? '';
     String readNumber(List<String> keys) => _readNumber(json, keys) ?? '';
+    String readNestedString(String key, List<String> keys) =>
+        _readNestedString(json, key, keys) ?? '';
+
+    final status = readString(const ['status', 'state']);
+    final normalizedStatus = status.trim().toLowerCase();
+    final code = switch (normalizedStatus) {
+      'goods_receipt' =>
+        readNestedString('goods_receipt', const ['code']).isNotEmpty
+            ? readNestedString('goods_receipt', const ['code'])
+            : readNestedString('goodsReceipt', const ['code']),
+      'goods_delivery' =>
+        readNestedString('goods_delivery', const ['code']).isNotEmpty
+            ? readNestedString('goods_delivery', const ['code'])
+            : readNestedString('goodsDelivery', const ['code']),
+      'internal_delivery_note' =>
+        readNestedString('internal_delivery_note', const ['code']).isNotEmpty
+            ? readNestedString('internal_delivery_note', const ['code'])
+            : readNestedString('internalDeliveryNote', const ['code']),
+      'loss_adjustment' =>
+        readNestedString('loss_adjustment', const ['code']).isNotEmpty
+            ? readNestedString('loss_adjustment', const ['code'])
+            : readNestedString('lossAdjustment', const ['code']),
+      _ => '',
+    };
 
     return WarehouseHistoryEntry(
       id: readString(const ['id', 'history_id', 'warehouse_history_id']),
-      supplierName: readString(const ['supplier_name', 'supplierName', 'supplier']),
-      purchaseOrder: readString(const [
-        'purchase_order',
-        'purchaseOrder',
-        'po_number',
-        'poNumber',
-      ]),
-      voucherDate: readString(const [
-        'voucher_date',
-        'voucherDate',
-        'transaction_date',
-        'transactionDate',
-      ]),
-      goodsValue: readNumber(const ['goods_value', 'goodsValue', 'value']),
-      itemCode: readString(const ['item_code', 'itemCode', 'sku_code', 'skuCode']),
-      warehouseCode:
-          readString(const ['warehouse_code', 'warehouseCode', 'warehouse']),
-      voucherDateSecondary: readString(const [
-        'voucher_date_secondary',
-        'voucherDateSecondary',
-        'stock_voucher_date',
-        'stockVoucherDate',
-        'warehouse_voucher_date',
-        'warehouseVoucherDate',
-      ]),
+      code: code.trim().isNotEmpty ? code : readString(const ['code']),
+      type: status,
+      commodityName: readNestedString(
+        'commodity',
+        const ['name', 'commodity_name', 'commodityName'],
+      ).isNotEmpty
+          ? readNestedString(
+              'commodity',
+              const ['name', 'commodity_name', 'commodityName'],
+            )
+          : readString(const ['commodity_name', 'commodityName']),
+      warehouseCode: readNestedString(
+        'warehouse',
+        const ['code', 'warehouse_code', 'warehouseCode'],
+      ).isNotEmpty
+          ? readNestedString(
+              'warehouse',
+              const ['code', 'warehouse_code', 'warehouseCode'],
+            )
+          : readString(const ['warehouse_code', 'warehouseCode']),
+      warehouseName: readNestedString(
+        'warehouse',
+        const ['name', 'warehouse_name', 'warehouseName'],
+      ).isNotEmpty
+          ? readNestedString(
+              'warehouse',
+              const ['name', 'warehouse_name', 'warehouseName'],
+            )
+          : readString(const ['warehouse_name', 'warehouseName']),
+      voucherDate: readString(const ['date_add', 'voucher_date', 'voucherDate']),
       openingStock:
-          readNumber(const ['opening_stock', 'openingStock', 'opening_balance']),
+          readNumber(const ['old_quantity', 'opening_stock', 'openingStock']),
       closingStock:
-          readNumber(const ['closing_stock', 'closingStock', 'closing_balance']),
+          readNumber(const ['quantity', 'closing_stock', 'closingStock']),
       lotNumber: readString(const ['lot_number', 'lotNumber', 'batch_number']),
-      quantitySold:
-          readNumber(const ['quantity_sold', 'quantitySold', 'quantity']),
-      status: readString(const ['status', 'state']),
     );
   }
 
   final String id;
-  final String supplierName;
-  final String purchaseOrder;
+  final String code;
+  final String type;
+  final String commodityName;
   final String voucherDate;
-  final String goodsValue;
-  final String itemCode;
   final String warehouseCode;
-  final String voucherDateSecondary;
+  final String warehouseName;
   final String openingStock;
   final String closingStock;
   final String lotNumber;
-  final String quantitySold;
-  final String status;
-
-  String get lotQuantityLabel {
-    final hasLot = lotNumber.trim().isNotEmpty;
-    final hasQuantity = quantitySold.trim().isNotEmpty;
-    if (hasLot && hasQuantity) {
-      return '${lotNumber.trim()} / ${quantitySold.trim()}';
-    }
-    if (hasLot) {
-      return lotNumber.trim();
-    }
-    if (hasQuantity) {
-      return quantitySold.trim();
-    }
-    return '';
-  }
 
   static String? _readString(Map<String, dynamic> map, List<String> keys) {
     for (final key in keys) {
@@ -342,6 +333,19 @@ class WarehouseHistoryEntry {
     }
     return null;
   }
+
+  static String? _readNestedString(
+    Map<String, dynamic> map,
+    String nestedKey,
+    List<String> keys,
+  ) {
+    final value = map[nestedKey];
+    if (value is Map<String, dynamic>) {
+      return _readString(value, keys);
+    }
+    return null;
+  }
+
 }
 
 class WarehouseHistoryException implements Exception {
