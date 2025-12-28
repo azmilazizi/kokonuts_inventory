@@ -494,7 +494,7 @@ class _InventoryHistoryHeader extends StatelessWidget {
             onTap: () => onSort(InventoryHistorySortColumn.type),
           ),
           SortableHeaderCell(
-            label: 'Commodity Code',
+            label: 'Commodity',
             flex: _columnFlex[2],
             theme: theme,
             isActive: sortColumn == InventoryHistorySortColumn.commodityName,

@@ -236,6 +236,8 @@ class WarehouseHistoryEntry {
     String readNumber(List<String> keys) => _readNumber(json, keys) ?? '';
     String readNestedString(String key, List<String> keys) =>
         _readNestedString(json, key, keys) ?? '';
+    String readNestedNestedString(String key, String nestedKey, List<String> keys) =>
+        _readDoubleNestedString(json, key, nestedKey, keys) ?? '';
 
     final status = readString(const ['status', 'state']);
     final normalizedStatus = status.trim().toLowerCase();
@@ -279,19 +281,35 @@ class WarehouseHistoryEntry {
 
     final code = resolveCode();
 
+    final commodityFromReceiptDetail = readNestedNestedString(
+      'goods_receipt_detail',
+      'code_commodity',
+      const ['name', 'commodity_name', 'commodityName'],
+    );
+    final commodityFromReceiptDetailCamel = readNestedNestedString(
+      'goodsReceiptDetail',
+      'code_commodity',
+      const ['name', 'commodity_name', 'commodityName'],
+    );
+
     return WarehouseHistoryEntry(
       id: readString(const ['id', 'history_id', 'warehouse_history_id']),
       code: code.trim().isNotEmpty ? code : readString(const ['code']),
       type: status,
-      commodityName: readNestedString(
-        'commodity',
-        const ['name', 'commodity_name', 'commodityName'],
-      ).isNotEmpty
-          ? readNestedString(
-              'commodity',
-              const ['name', 'commodity_name', 'commodityName'],
-            )
-          : readString(const ['commodity_name', 'commodityName']),
+      commodityName: commodityFromReceiptDetail.isNotEmpty
+          ? commodityFromReceiptDetail
+          : commodityFromReceiptDetailCamel.isNotEmpty
+              ? commodityFromReceiptDetailCamel
+              : readNestedString(
+                      'commodity',
+                      const ['name', 'commodity_name', 'commodityName'],
+                    )
+                  .isNotEmpty
+                  ? readNestedString(
+                      'commodity',
+                      const ['name', 'commodity_name', 'commodityName'],
+                    )
+                  : readString(const ['commodity_name', 'commodityName']),
       warehouseCode: readNestedString(
         'warehouse',
         const ['code', 'warehouse_code', 'warehouseCode'],
@@ -401,6 +419,22 @@ class WarehouseHistoryEntry {
     final value = map[nestedKey];
     if (value is Map<String, dynamic>) {
       return _readString(value, keys);
+    }
+    return null;
+  }
+
+  static String? _readDoubleNestedString(
+    Map<String, dynamic> map,
+    String nestedKey,
+    String innerKey,
+    List<String> keys,
+  ) {
+    final value = map[nestedKey];
+    if (value is Map<String, dynamic>) {
+      final innerValue = value[innerKey];
+      if (innerValue is Map<String, dynamic>) {
+        return _readString(innerValue, keys);
+      }
     }
     return null;
   }
