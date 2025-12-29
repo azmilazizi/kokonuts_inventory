@@ -447,31 +447,30 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: const [
-                      Expanded(flex: 3, child: Text('Item')),
-                      Expanded(flex: 2, child: Text('Lot Number')),
-                      Expanded(flex: 2, child: Text('Current Quantity')),
-                      Expanded(flex: 2, child: Text('Updated Quantity')),
-                      Expanded(flex: 1, child: Text('Actions')),
-                    ],
+                Material(
+                  color: theme.colorScheme.surfaceVariant.withOpacity(0.6),
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    child: Row(
+                      children: const [
+                        Expanded(flex: 3, child: Text('Item')),
+                        Expanded(flex: 2, child: Text('Lot Number')),
+                        Expanded(flex: 2, child: Text('Current Quantity')),
+                        Expanded(flex: 2, child: Text('Updated Quantity')),
+                        Expanded(flex: 1, child: Text('Actions')),
+                      ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
                 if (_lineItems.isEmpty)
                   Container(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
-                      border: Border.all(color: theme.dividerColor),
-                      borderRadius: BorderRadius.circular(8),
+                      color: theme.colorScheme.surfaceVariant.withOpacity(0.2),
+                      border: Border.all(color: theme.dividerColor.withOpacity(0.6)),
                     ),
                     child: Row(
                       children: const [
@@ -495,7 +494,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
 
                       return Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
+                          horizontal: 16,
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
