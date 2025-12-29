@@ -302,7 +302,7 @@ class _StockAdjustmentTabState extends State<StockAdjustmentTab> {
     return entry.type.toLowerCase().contains(query) ||
         entry.dateCreated.toLowerCase().contains(query) ||
         entry.lastUpdated.toLowerCase().contains(query) ||
-        entry.status.toLowerCase().contains(query) ||
+        _statusLabel(entry.status).toLowerCase().contains(query) ||
         entry.creator.toLowerCase().contains(query);
   }
 
@@ -325,7 +325,9 @@ class _StockAdjustmentTabState extends State<StockAdjustmentTab> {
       case StockAdjustmentSortColumn.lastUpdated:
         return _compareDates(a.lastUpdated, b.lastUpdated);
       case StockAdjustmentSortColumn.status:
-        return a.status.toLowerCase().compareTo(b.status.toLowerCase());
+        return _statusLabel(a.status)
+            .toLowerCase()
+            .compareTo(_statusLabel(b.status).toLowerCase());
       case StockAdjustmentSortColumn.creator:
         return a.creator.toLowerCase().compareTo(b.creator.toLowerCase());
     }
@@ -590,11 +592,7 @@ class _StockAdjustmentRow extends StatelessWidget {
             flex: _columnFlex[2],
             textAlign: TextAlign.center,
           ),
-          _DataCell(
-            _displayValue(entry.status),
-            flex: _columnFlex[3],
-            textAlign: TextAlign.center,
-          ),
+          _StatusPillCell(entry.status, flex: _columnFlex[3]),
           _DataCell(_displayValue(entry.creator), flex: _columnFlex[4]),
           const SizedBox(width: 12),
           Expanded(
@@ -676,4 +674,105 @@ class _DataCell extends StatelessWidget {
       ),
     );
   }
+}
+
+class _StatusPillCell extends StatelessWidget {
+  const _StatusPillCell(
+    this.value, {
+    required this.flex,
+    this.alignment = Alignment.center,
+  });
+
+  final String value;
+  final int flex;
+  final Alignment alignment;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final trimmed = value.trim();
+    final label = _statusLabel(trimmed);
+    final colors = _statusPillColors(theme, trimmed);
+    final display = label.isEmpty ? '—' : label;
+
+    return Expanded(
+      flex: flex,
+      child: Align(
+        alignment: alignment,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: colors.background,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            display,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: colors.foreground,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _statusLabel(String value) {
+  final trimmed = value.trim();
+  final normalized = trimmed.toLowerCase();
+  switch (normalized) {
+    case '2':
+    case 'draft save':
+      return 'Draft save';
+    case '0':
+    case 'not yet approved':
+      return 'Not Yet Approved';
+    case '1':
+    case 'approved':
+      return 'Approved';
+    default:
+      return trimmed;
+  }
+}
+
+_PillColors _statusPillColors(ThemeData theme, String value) {
+  final normalized = value.trim().toLowerCase();
+  switch (normalized) {
+    case '2':
+    case 'draft save':
+      return const _PillColors(
+        background: Color(0xFFEFF1F5),
+        foreground: Color(0xFF475467),
+      );
+    case '0':
+    case 'not yet approved':
+      return const _PillColors(
+        background: Color(0xFFFFF4E5),
+        foreground: Color(0xFFB54708),
+      );
+    case '1':
+    case 'approved':
+      return const _PillColors(
+        background: Color(0xFFE6F6EE),
+        foreground: Color(0xFF147A42),
+      );
+    default:
+      return _PillColors(
+        background: theme.colorScheme.surfaceVariant.withOpacity(0.5),
+        foreground: theme.colorScheme.onSurfaceVariant,
+      );
+  }
+}
+
+class _PillColors {
+  const _PillColors({
+    required this.background,
+    required this.foreground,
+  });
+
+  final Color background;
+  final Color foreground;
 }
