@@ -262,6 +262,14 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Close'),
         ),
+        OutlinedButton(
+          onPressed: _handleSaveDraft,
+          child: const Text('Save as Draft'),
+        ),
+        ElevatedButton(
+          onPressed: _handleSave,
+          child: const Text('Save'),
+        ),
       ],
     );
   }
@@ -553,21 +561,6 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                   icon: const Icon(Icons.check_circle_outline),
                   tooltip: 'Add item',
                   color: theme.colorScheme.primary,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                OutlinedButton(
-                  onPressed: _handleSaveDraft,
-                  child: const Text('Save as Draft'),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton(
-                  onPressed: _handleSave,
-                  child: const Text('Save'),
                 ),
               ],
             ),
