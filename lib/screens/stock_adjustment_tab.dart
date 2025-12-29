@@ -233,9 +233,7 @@ class _StockAdjustmentTabState extends State<StockAdjustmentTab> {
                               childCount: _displayEntries.length,
                             ),
                           ),
-                          SliverToBoxAdapter(
-                            child: _buildFooter(theme),
-                          ),
+                          _buildFooterSliver(theme),
                         ],
                       ),
                     ),
@@ -461,10 +459,10 @@ class _StockAdjustmentTabState extends State<StockAdjustmentTab> {
     return left.toLowerCase().compareTo(right.toLowerCase());
   }
 
-  Widget _buildFooter(ThemeData theme) {
+  Widget _buildFooterSliver(ThemeData theme) {
     if (_isLoading && _displayEntries.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 48),
+      return SliverFillRemaining(
+        hasScrollBody: false,
         child: Center(
           child: CircularProgressIndicator(color: theme.colorScheme.primary),
         ),
@@ -472,71 +470,80 @@ class _StockAdjustmentTabState extends State<StockAdjustmentTab> {
     }
 
     if (_error != null) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-        child: Column(
-          children: [
-            Text(
-              _error!,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.error),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: () => _fetchPage(reset: _displayEntries.isEmpty),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_displayEntries.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
-        child: Column(
-          children: [
-            Icon(
-              Icons.tune_outlined,
-              size: 48,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No stock adjustments available.',
-              style: theme.textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Pull to refresh to check for updates.',
-              style: theme.textTheme.bodyMedium,
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_isLoading) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (_hasMore) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: Center(
-          child: Text(
-            'Scroll to load more adjustments…',
-            style: theme.textTheme.bodySmall,
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            children: [
+              Text(
+                _error!,
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: theme.colorScheme.error),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: () => _fetchPage(reset: _displayEntries.isEmpty),
+                child: const Text('Retry'),
+              ),
+            ],
           ),
         ),
       );
     }
 
-    return const SizedBox.shrink();
+    if (_displayEntries.isEmpty) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.tune_outlined,
+                  size: 48,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'No stock adjustments available.',
+                  style: theme.textTheme.titleMedium,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_isLoading) {
+      return const SliverToBoxAdapter(
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 24),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      );
+    }
+
+    if (_hasMore) {
+      return SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24),
+          child: Center(
+            child: Text(
+              'Scroll to load more adjustments…',
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return const SliverToBoxAdapter(
+      child: SizedBox.shrink(),
+    );
   }
 }
 
