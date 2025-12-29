@@ -367,6 +367,24 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   }
 
   Widget _buildItemsTable(ThemeData theme) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const minTableWidth = 720.0;
+        final tableWidth =
+            constraints.maxWidth < minTableWidth ? minTableWidth : constraints.maxWidth;
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: tableWidth),
+            child: _buildItemsTableContent(theme),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildItemsTableContent(ThemeData theme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
