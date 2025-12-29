@@ -57,9 +57,6 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   @override
   void initState() {
     super.initState();
-    if (_isResumeMode) {
-      _selectedType = 'type';
-    }
     _setCurrentTime();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _setCurrentTime());
     _updatedQuantityController.addListener(() {
@@ -192,7 +189,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     );
 
     setState(() {
-      _selectedType = _isResumeMode ? 'type' : _resolveTypeSelection(rawType);
+      _selectedType = _resolveTypeSelection(rawType);
       _selectedWarehouseId = resolvedWarehouseId;
       _selectedWarehouseName = resolvedWarehouseName;
       _warehouseNameController.text = resolvedWarehouseName ?? '';
@@ -370,7 +367,14 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     final isReadOnly = _isResumeMode;
     final theme = Theme.of(context);
     final typeItems = isReadOnly
-        ? const [DropdownMenuItem(value: 'type', child: Text('Type'))]
+        ? [
+            DropdownMenuItem(
+              value: _selectedType ?? '',
+              child: Text(
+                _formatTypeLabel(_selectedType) ?? 'Type',
+              ),
+            ),
+          ]
         : const [
             DropdownMenuItem(value: 'loss', child: Text('Loss')),
             DropdownMenuItem(
@@ -402,17 +406,6 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   Widget _buildWarehouseDropdown() {
     final isReadOnly = _isResumeMode;
     final theme = Theme.of(context);
-    if (isReadOnly) {
-      return TextFormField(
-        controller: _warehouseNameController,
-        readOnly: true,
-        style: ReadOnlyFieldStyle.textStyle(theme),
-        decoration: ReadOnlyFieldStyle.decoration(
-          theme,
-          labelText: 'Warehouse',
-        ),
-      );
-    }
     return DropdownButtonFormField<String>(
       value: _selectedWarehouseId,
       items: _warehouses
@@ -431,7 +424,13 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                 _resetSelectedItem();
               });
             },
-      decoration: const InputDecoration(labelText: 'Warehouse'),
+      style: isReadOnly ? ReadOnlyFieldStyle.textStyle(theme) : null,
+      decoration: isReadOnly
+          ? ReadOnlyFieldStyle.decoration(
+              theme,
+              labelText: 'Warehouse',
+            )
+          : const InputDecoration(labelText: 'Warehouse'),
     );
   }
 
@@ -998,6 +997,17 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       return 'adjustment';
     }
     return normalized;
+  }
+
+  String? _formatTypeLabel(String? rawType) {
+    if (rawType == null) {
+      return null;
+    }
+    final trimmed = rawType.trim();
+    if (trimmed.isEmpty) {
+      return null;
+    }
+    return trimmed[0].toUpperCase() + trimmed.substring(1);
   }
 
   String? _resolveWarehouseSelection({
