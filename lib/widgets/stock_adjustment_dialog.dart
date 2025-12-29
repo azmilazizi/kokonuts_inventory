@@ -488,37 +488,49 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                     ),
                   )
                 else
-                  ..._lineItems.map(
-                    (item) => Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: theme.dividerColor),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(flex: 3, child: Text(item.commodityName)),
-                          Expanded(flex: 2, child: Text(item.lotNumber)),
-                          Expanded(flex: 2, child: Text(item.currentNumber)),
-                          Expanded(flex: 2, child: Text(item.updatedNumber)),
-                          Expanded(
-                            flex: 1,
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: IconButton(
-                                icon: const Icon(Icons.delete_outline),
-                                tooltip: 'Remove item',
-                                onPressed: () => _removeLineItem(item),
+                  ..._lineItems.asMap().entries.map(
+                    (entry) {
+                      final item = entry.value;
+                      final showTopBorder = entry.key == 0;
+                      final rowBorderColor = theme.dividerColor.withOpacity(0.6);
+                      final rowBackground =
+                          theme.colorScheme.surfaceVariant.withOpacity(0.3);
+
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: rowBackground,
+                          border: Border(
+                            top: showTopBorder
+                                ? BorderSide(color: rowBorderColor)
+                                : BorderSide.none,
+                            bottom: BorderSide(color: rowBorderColor),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(flex: 3, child: Text(item.commodityName)),
+                            Expanded(flex: 2, child: Text(item.lotNumber)),
+                            Expanded(flex: 2, child: Text(item.currentNumber)),
+                            Expanded(flex: 2, child: Text(item.updatedNumber)),
+                            Expanded(
+                              flex: 1,
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: IconButton(
+                                  icon: const Icon(Icons.delete_outline),
+                                  tooltip: 'Remove item',
+                                  onPressed: () => _removeLineItem(item),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
               ],
             ),
@@ -619,78 +631,98 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
               onChanged: canSelectItem ? (value) => _handleItemSelected(value) : null,
             ),
             const SizedBox(height: 12),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: DropdownButtonFormField<String>(
-                    value: effectiveSelectedLotNumber,
-                    decoration: hasSelectedItem
-                        ? const InputDecoration(labelText: 'Lot Number')
-                        : ReadOnlyFieldStyle.decoration(
-                            theme,
-                            labelText: 'Lot Number',
-                          ),
-                    style: hasSelectedItem ? null : readOnlyTextStyle,
-                    items: availableLots
-                        .map(
-                          (lot) => DropdownMenuItem(
-                            value: lot.lotNumber,
-                            child: Text(lot.lotNumber),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: hasSelectedItem
-                        ? (value) {
-                            setState(() {
-                              _selectedLotNumber = value;
-                              final selected = availableLots.firstWhere(
-                                (lot) => lot.lotNumber == value,
-                                orElse: () => const StocktakeLotOption(
-                                  lotNumber: '',
-                                  inventoryNumber: '',
-                                ),
-                              );
-                              _currentQuantityController.text =
-                                  selected.inventoryNumber;
-                            });
-                          }
-                        : null,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isCompact = constraints.maxWidth < 600;
+                final lotField = DropdownButtonFormField<String>(
+                  value: effectiveSelectedLotNumber,
+                  decoration: hasSelectedItem
+                      ? const InputDecoration(labelText: 'Lot Number')
+                      : ReadOnlyFieldStyle.decoration(
+                          theme,
+                          labelText: 'Lot Number',
+                        ),
+                  style: hasSelectedItem ? null : readOnlyTextStyle,
+                  items: availableLots
+                      .map(
+                        (lot) => DropdownMenuItem(
+                          value: lot.lotNumber,
+                          child: Text(lot.lotNumber),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: hasSelectedItem
+                      ? (value) {
+                          setState(() {
+                            _selectedLotNumber = value;
+                            final selected = availableLots.firstWhere(
+                              (lot) => lot.lotNumber == value,
+                              orElse: () => const StocktakeLotOption(
+                                lotNumber: '',
+                                inventoryNumber: '',
+                              ),
+                            );
+                            _currentQuantityController.text =
+                                selected.inventoryNumber;
+                          });
+                        }
+                      : null,
+                );
+                final currentQuantityField = TextFormField(
+                  readOnly: true,
+                  enabled: hasSelectedItem,
+                  controller: _currentQuantityController,
+                  style: readOnlyTextStyle,
+                  decoration: ReadOnlyFieldStyle.decoration(
+                    theme,
+                    labelText: 'Current Quantity',
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: TextFormField(
-                    readOnly: true,
-                    enabled: hasSelectedItem,
-                    controller: _currentQuantityController,
-                    style: readOnlyTextStyle,
-                    decoration: ReadOnlyFieldStyle.decoration(
-                      theme,
-                      labelText: 'Current Quantity',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: TextFormField(
-                    controller: _updatedQuantityController,
-                    enabled: hasSelectedItem,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(labelText: 'Updated Quantity'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                IconButton(
+                );
+                final updatedQuantityField = TextFormField(
+                  controller: _updatedQuantityController,
+                  enabled: hasSelectedItem,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  decoration: const InputDecoration(labelText: 'Updated Quantity'),
+                );
+                final addButton = IconButton(
                   onPressed: canAdd ? _handleAddLineItem : null,
                   icon: const Icon(Icons.check_circle_outline),
                   tooltip: 'Add item',
                   color: theme.colorScheme.primary,
-                ),
-              ],
+                );
+
+                if (isCompact) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      lotField,
+                      const SizedBox(height: 12),
+                      currentQuantityField,
+                      const SizedBox(height: 12),
+                      updatedQuantityField,
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: addButton,
+                      ),
+                    ],
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(flex: 3, child: lotField),
+                    const SizedBox(width: 12),
+                    Expanded(flex: 2, child: currentQuantityField),
+                    const SizedBox(width: 12),
+                    Expanded(flex: 2, child: updatedQuantityField),
+                    const SizedBox(width: 12),
+                    addButton,
+                  ],
+                );
+              },
             ),
           ],
         ),
