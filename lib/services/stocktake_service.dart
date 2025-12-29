@@ -145,6 +145,7 @@ class StocktakeService {
       final skuCode = _readString(source, const ['sku_code', 'skuCode', 'sku']);
       final skuName = _readString(source, const ['sku_name', 'skuName', 'name']);
       final name = _readString(source, const ['name', 'item_name', 'title']);
+      final unitId = _readString(source, const ['unit_id', 'unitId', 'unit']);
       final total = _readString(source, const [
         'total',
         'inventory_total',
@@ -159,6 +160,7 @@ class StocktakeService {
           skuCode: skuCode,
           skuName: skuName ?? name ?? id,
           total: total,
+          unitId: unitId,
         ));
       }
       for (final value in source.values) {
@@ -226,12 +228,14 @@ class StocktakeItemOption {
     required this.skuCode,
     required this.skuName,
     required this.total,
+    required this.unitId,
   });
 
   final String id;
   final String? skuCode;
   final String skuName;
   final String? total;
+  final String? unitId;
 
   String get displayName {
     final code = skuCode?.trim();
@@ -240,6 +244,11 @@ class StocktakeItemOption {
     return totalValue == null || totalValue.isEmpty
         ? label
         : '$label ($totalValue)';
+  }
+
+  String get commodityName {
+    final code = skuCode?.trim();
+    return code == null || code.isEmpty ? skuName : '${code}_$skuName';
   }
 }
 
