@@ -31,11 +31,13 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   final _timeController = TextEditingController();
   final _currentQuantityController = TextEditingController();
   final _updatedQuantityController = TextEditingController();
+  final _warehouseNameController = TextEditingController();
 
   Timer? _timer;
 
   String? _selectedType;
   String? _selectedWarehouseId;
+  String? _selectedWarehouseName;
 
   String? _selectedItemId;
   String? _selectedLotNumber;
@@ -54,6 +56,9 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   @override
   void initState() {
     super.initState();
+    if (_isResumeMode) {
+      _selectedType = 'type';
+    }
     _setCurrentTime();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _setCurrentTime());
     _updatedQuantityController.addListener(() {
@@ -69,6 +74,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     _timeController.dispose();
     _currentQuantityController.dispose();
     _updatedQuantityController.dispose();
+    _warehouseNameController.dispose();
     super.dispose();
   }
 
@@ -176,13 +182,19 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         : null;
 
     final resolvedWarehouseId = _resolveWarehouseSelection(
-      warehouseId: warehouseId ?? warehousesId ?? nestedWarehouseId,
+      warehouseId: warehousesId ?? warehouseId ?? nestedWarehouseId,
       warehouseName: warehouseName ?? warehousesName ?? nestedWarehouseName,
+    );
+    final resolvedWarehouseName = _resolveWarehouseName(
+      warehouseId: resolvedWarehouseId,
+      fallbackName: warehouseName ?? warehousesName ?? nestedWarehouseName,
     );
 
     setState(() {
-      _selectedType = _resolveTypeSelection(rawType);
+      _selectedType = _isResumeMode ? 'type' : _resolveTypeSelection(rawType);
       _selectedWarehouseId = resolvedWarehouseId;
+      _selectedWarehouseName = resolvedWarehouseName;
+      _warehouseNameController.text = resolvedWarehouseName ?? '';
       _lineItems
         ..clear()
         ..addAll(_extractLineItems(detail));
@@ -354,12 +366,18 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     final isReadOnly = _isResumeMode;
     final theme = Theme.of(context);
     final readOnlyFillColor = theme.colorScheme.surfaceVariant.withOpacity(0.4);
+    final typeItems = isReadOnly
+        ? const [DropdownMenuItem(value: 'type', child: Text('Type'))]
+        : const [
+            DropdownMenuItem(value: 'loss', child: Text('Loss')),
+            DropdownMenuItem(
+              value: 'adjustment',
+              child: Text('Adjustment Increase'),
+            ),
+          ];
     return DropdownButtonFormField<String>(
       value: _selectedType,
-      items: const [
-        DropdownMenuItem(value: 'loss', child: Text('Loss')),
-        DropdownMenuItem(value: 'adjustment', child: Text('Adjustment Increase')),
-      ],
+      items: typeItems,
       onChanged: isReadOnly
           ? null
           : (value) {
@@ -380,6 +398,17 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     final isReadOnly = _isResumeMode;
     final theme = Theme.of(context);
     final readOnlyFillColor = theme.colorScheme.surfaceVariant.withOpacity(0.4);
+    if (isReadOnly) {
+      return TextFormField(
+        controller: _warehouseNameController,
+        readOnly: true,
+        decoration: InputDecoration(
+          labelText: 'Warehouse',
+          filled: true,
+          fillColor: readOnlyFillColor,
+        ),
+      );
+    }
     return DropdownButtonFormField<String>(
       value: _selectedWarehouseId,
       items: _warehouses
@@ -991,6 +1020,28 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     }
 
     return warehouseId;
+  }
+
+  String? _resolveWarehouseName({
+    required String? warehouseId,
+    required String? fallbackName,
+  }) {
+    if (warehouseId != null && warehouseId.trim().isNotEmpty) {
+      final trimmedId = warehouseId.trim();
+      final matchById = _warehouses.firstWhere(
+        (warehouse) => warehouse.id == trimmedId,
+        orElse: () => const WarehouseOption(id: '', name: ''),
+      );
+      if (matchById.id.isNotEmpty) {
+        return matchById.name;
+      }
+    }
+
+    if (fallbackName != null && fallbackName.trim().isNotEmpty) {
+      return fallbackName.trim();
+    }
+
+    return null;
   }
 
   String? _readWarehouseId(dynamic value) {
