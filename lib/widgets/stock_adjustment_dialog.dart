@@ -39,6 +39,9 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   String? _selectedType;
   String? _selectedWarehouseId;
   String? _selectedWarehouseName;
+  String? _detailType;
+  String? _detailWarehouseId;
+  String? _detailWarehouseName;
 
   String? _selectedItemId;
   String? _selectedLotNumber;
@@ -149,6 +152,9 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         final detail = results[2] as Map<String, dynamic>;
         _hydrateFromDetail(detail);
       }
+      if (mounted) {
+        _refreshTypeAndWarehouseFields();
+      }
     } catch (error) {
       if (!mounted) {
         return;
@@ -187,6 +193,10 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       warehouseId: resolvedWarehouseId,
       fallbackName: warehouseName ?? warehousesName ?? nestedWarehouseName,
     );
+
+    _detailType = rawType;
+    _detailWarehouseId = warehousesId ?? warehouseId ?? nestedWarehouseId;
+    _detailWarehouseName = warehouseName ?? warehousesName ?? nestedWarehouseName;
 
     setState(() {
       _selectedType = _resolveTypeSelection(rawType);
@@ -1042,6 +1052,31 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       return 'adjustment';
     }
     return normalized;
+  }
+
+  void _refreshTypeAndWarehouseFields() {
+    if (_detailType == null &&
+        _detailWarehouseId == null &&
+        _detailWarehouseName == null) {
+      return;
+    }
+
+    final resolvedType = _resolveTypeSelection(_detailType);
+    final resolvedWarehouseId = _resolveWarehouseSelection(
+      warehouseId: _detailWarehouseId,
+      warehouseName: _detailWarehouseName,
+    );
+    final resolvedWarehouseName = _resolveWarehouseName(
+      warehouseId: resolvedWarehouseId,
+      fallbackName: _detailWarehouseName,
+    );
+
+    setState(() {
+      _selectedType = resolvedType;
+      _selectedWarehouseId = resolvedWarehouseId;
+      _selectedWarehouseName = resolvedWarehouseName;
+      _warehouseNameController.text = resolvedWarehouseName ?? '';
+    });
   }
 
   String? _formatTypeLabel(String? rawType) {
