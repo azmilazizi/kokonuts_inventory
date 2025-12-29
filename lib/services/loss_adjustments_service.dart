@@ -11,6 +11,7 @@ class LossAdjustmentsService {
       'https://crm.kokonuts.my/warehouse/api/v1/loss_adjustments';
   static const _detailBaseUrl =
       'https://crm.kokonuts.my/warehouse/api/v1/loss_adjustment';
+  static const _jsonHeaders = {'Content-Type': 'application/json'};
 
   Future<LossAdjustmentsPage> fetchLossAdjustments({
     required int page,
@@ -98,6 +99,52 @@ class LossAdjustmentsService {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw LossAdjustmentsException(
         'Delete failed with status ${response.statusCode}: ${response.body}',
+      );
+    }
+  }
+
+  Future<void> createLossAdjustment({
+    required Map<String, String> headers,
+    required Map<String, dynamic> payload,
+  }) async {
+    final uri = Uri.parse(_baseUrl);
+    http.Response response;
+    try {
+      response = await _client.post(
+        uri,
+        headers: {...headers, ..._jsonHeaders},
+        body: jsonEncode(payload),
+      );
+    } catch (error) {
+      throw LossAdjustmentsException('Failed to reach server: $error');
+    }
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw LossAdjustmentsException(
+        'Create failed with status ${response.statusCode}: ${response.body}',
+      );
+    }
+  }
+
+  Future<void> saveDraftLossAdjustment({
+    required Map<String, String> headers,
+    required Map<String, dynamic> payload,
+  }) async {
+    final uri = Uri.parse(_baseUrl);
+    http.Response response;
+    try {
+      response = await _client.put(
+        uri,
+        headers: {...headers, ..._jsonHeaders},
+        body: jsonEncode(payload),
+      );
+    } catch (error) {
+      throw LossAdjustmentsException('Failed to reach server: $error');
+    }
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw LossAdjustmentsException(
+        'Save draft failed with status ${response.statusCode}: ${response.body}',
       );
     }
   }

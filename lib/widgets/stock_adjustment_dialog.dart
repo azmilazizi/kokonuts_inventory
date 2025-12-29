@@ -49,6 +49,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
 
   bool _isLoading = false;
   String? _loadingError;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -237,7 +238,11 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         .replaceFirst(RegExp('^Bearer\\s+', caseSensitive: false), '')
         .trim();
     final authtokenHeader = autoTokenValue.isNotEmpty ? autoTokenValue : sanitizedToken;
-    return {'authtoken': authtokenHeader, 'Authorization': normalizedAuth};
+    return {
+      'Accept': 'application/json',
+      'authtoken': authtokenHeader,
+      'Authorization': normalizedAuth,
+    };
   }
 
   @override
@@ -262,15 +267,15 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
           child: const Text('Close'),
         ),
         OutlinedButton(
-          onPressed: _handleSaveDraft,
+          onPressed: _isSaving ? null : _handleSaveDraft,
           child: const Text('Save as Draft'),
         ),
         ElevatedButton(
-          onPressed: _handleSave,
+          onPressed: _isSaving ? null : _handleSave,
           child: const Text('Save'),
         ),
       ],
@@ -753,15 +758,142 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   }
 
   void _handleSaveDraft() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Save as Draft is not available yet.')),
-    );
+    _submitAdjustment(isDraft: true);
   }
 
   void _handleSave() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Save is not available yet.')),
-    );
+    _submitAdjustment(isDraft: false);
+  }
+
+  Future<void> _submitAdjustment({required bool isDraft}) async {
+    if (_isSaving) {
+      return;
+    }
+
+    final payload = _buildLossAdjustmentPayload(isDraft: isDraft);
+    if (payload == null) {
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    final appState = AppStateScope.of(context);
+    final token = await appState.getValidAuthToken();
+    if (!mounted) {
+      return;
+    }
+
+    if (token == null || token.trim().isEmpty) {
+      setState(() {
+        _isSaving = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You are not logged in.')),
+      );
+      return;
+    }
+
+    final headers = _buildAuthHeaders(appState, token);
+
+    try {
+      final adjustmentId = widget.adjustmentId?.trim();
+      final hasExistingId = adjustmentId != null && adjustmentId.isNotEmpty;
+      if (isDraft && hasExistingId) {
+        await _lossAdjustmentsService.saveDraftLossAdjustment(
+          headers: headers,
+          payload: payload,
+        );
+      } else {
+        await _lossAdjustmentsService.createLossAdjustment(
+          headers: headers,
+          payload: payload,
+        );
+      }
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isDraft ? 'Stocktake saved as draft.' : 'Stocktake saved.',
+          ),
+        ),
+      );
+      Navigator.of(context).pop();
+    } on LossAdjustmentsException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
+
+  Map<String, dynamic>? _buildLossAdjustmentPayload({required bool isDraft}) {
+    final type = _selectedType?.trim();
+    if (type == null || type.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a type.')),
+      );
+      return null;
+    }
+
+    final warehouseId = _selectedWarehouseId?.trim();
+    if (warehouseId == null || warehouseId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a warehouse.')),
+      );
+      return null;
+    }
+
+    if (_lineItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please add at least one item.')),
+      );
+      return null;
+    }
+
+    final lineItems = _lineItems
+        .map(
+          (item) => {
+            'item_id': item.itemId,
+            'lot_number': item.lotNumber,
+            'current_number': item.currentNumber,
+            'updated_number': item.updatedNumber,
+          },
+        )
+        .toList();
+
+    final payload = <String, dynamic>{
+      'type': type,
+      'warehouse_id': warehouseId,
+      'time': _timeController.text.trim(),
+      'items': lineItems,
+      'status': isDraft ? 'draft' : 'submitted',
+    };
+
+    final adjustmentId = widget.adjustmentId?.trim();
+    if (adjustmentId != null && adjustmentId.isNotEmpty) {
+      payload['id'] = adjustmentId;
+    }
+
+    return payload;
   }
 
   String? _readString(Map<String, dynamic> map, List<String> keys) {
