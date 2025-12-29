@@ -15,6 +15,7 @@ import '../services/purchase_orders_service.dart';
 import '../widgets/add_expense_dialog.dart';
 import '../widgets/add_purchase_order_dialog.dart';
 import '../widgets/post_dialog.dart';
+import '../widgets/stock_adjustment_dialog.dart';
 import '../widgets/app_logo.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -129,14 +130,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       case 2:
         await showDialog<void>(
           context: context,
-          builder: (context) => const PostDialog(
-            title: 'Create Stock Adjustment',
-            apiPath: 'https://crm.kokonuts.my',
-            description:
-                'Add the correct endpoint and payload for stock adjustments when ready.',
-            samplePayload: {
-              'example': 'value',
-            },
+          barrierDismissible: false,
+          builder: (context) => const StockAdjustmentDialog(
+            title: 'Stocktake',
           ),
         );
         break;

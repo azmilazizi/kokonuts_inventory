@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app/app_state_scope.dart';
 import '../services/loss_adjustments_service.dart';
+import '../widgets/stock_adjustment_dialog.dart';
 import '../widgets/sortable_header_cell.dart';
 import '../widgets/table_filter_bar.dart';
 
@@ -268,9 +269,104 @@ class _StockAdjustmentTabState extends State<StockAdjustmentTab> {
   }
 
   void _handleAction(String label, LossAdjustmentEntry entry) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label is not available yet.')),
+    switch (label) {
+      case 'Edit':
+        _openStocktakeDialog(
+          adjustmentId: entry.id,
+          subtitle: 'Resume Stocktake',
+        );
+        break;
+      case 'Delete':
+        _deleteAdjustment(entry);
+        break;
+      default:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$label is not available yet.')),
+        );
+    }
+  }
+
+  Future<void> _openStocktakeDialog({
+    required String? adjustmentId,
+    String? subtitle,
+  }) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StockAdjustmentDialog(
+        title: 'Stocktake',
+        subtitle: subtitle,
+        adjustmentId: adjustmentId,
+      ),
     );
+  }
+
+  Future<void> _deleteAdjustment(LossAdjustmentEntry entry) async {
+    if (entry.id.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to delete: missing ID.')),
+      );
+      return;
+    }
+
+    final appState = AppStateScope.of(context);
+    final token = await appState.getValidAuthToken();
+    if (!mounted) {
+      return;
+    }
+
+    if (token == null || token.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You are not logged in.')),
+      );
+      return;
+    }
+
+    final rawToken = (appState.rawAuthToken ?? token).trim();
+    final sanitizedToken =
+        token.replaceFirst(RegExp('^Bearer\\s+', caseSensitive: false), '').trim();
+    final normalizedAuth =
+        sanitizedToken.isNotEmpty ? 'Bearer $sanitizedToken' : token.trim();
+    final autoTokenValue = rawToken
+        .replaceFirst(RegExp('^Bearer\\s+', caseSensitive: false), '')
+        .trim();
+
+    final authtokenHeader = autoTokenValue.isNotEmpty ? autoTokenValue : sanitizedToken;
+
+    try {
+      await _service.deleteLossAdjustment(
+        id: entry.id.trim(),
+        headers: {
+          'Accept': 'application/json',
+          'authtoken': authtokenHeader,
+          'Authorization': normalizedAuth,
+        },
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _entriesByKey.remove(_entryStorageKey(entry));
+        _rebuildDisplayEntries();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Stock adjustment deleted.')),
+      );
+    } on LossAdjustmentsException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString())),
+      );
+    }
   }
 
   String _entryStorageKey(LossAdjustmentEntry entry) {
