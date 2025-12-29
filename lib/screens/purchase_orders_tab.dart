@@ -23,7 +23,8 @@ class PurchaseOrdersTab extends StatefulWidget {
   PurchaseOrdersTabState createState() => PurchaseOrdersTabState();
 }
 
-class PurchaseOrdersTabState extends State<PurchaseOrdersTab> {
+class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
+    with AutomaticKeepAliveClientMixin {
   final _service = PurchaseOrdersService();
   final _scrollController = ScrollController();
   final _horizontalController = ScrollController();
@@ -193,6 +194,7 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
 
@@ -539,6 +541,9 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab> {
 
     return const SizedBox.shrink();
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
 class _PurchaseOrdersHeader extends StatelessWidget {

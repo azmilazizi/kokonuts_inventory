@@ -18,7 +18,8 @@ class OverviewTab extends StatefulWidget {
   State<OverviewTab> createState() => _OverviewTabState();
 }
 
-class _OverviewTabState extends State<OverviewTab> {
+class _OverviewTabState extends State<OverviewTab>
+    with AutomaticKeepAliveClientMixin {
   late final OverviewService _service;
   late final ExpensesService _expensesService;
   late final BillsService _billsService;
@@ -242,6 +243,7 @@ class _OverviewTabState extends State<OverviewTab> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
     final dateFormatter = DateFormat('MMM dd, yyyy');
 
@@ -457,6 +459,9 @@ class _OverviewTabState extends State<OverviewTab> {
       ),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
 class _TransactionsTable extends StatelessWidget {
