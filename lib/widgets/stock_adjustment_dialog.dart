@@ -533,7 +533,10 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       _lots = const [];
     });
 
-    if (itemId == null || itemId.trim().isEmpty) {
+    if (itemId == null ||
+        itemId.trim().isEmpty ||
+        _selectedWarehouseId == null ||
+        _selectedWarehouseId!.trim().isEmpty) {
       return;
     }
 
@@ -552,10 +555,15 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     }
 
     final headers = _buildAuthHeaders(appState, token);
+    final warehouseId = _selectedWarehouseId;
+    if (warehouseId == null || warehouseId.trim().isEmpty) {
+      return;
+    }
 
     try {
       final lots = await _stocktakeService.fetchLots(
         itemId: itemId,
+        warehouseId: warehouseId,
         headers: headers,
       );
       if (!mounted) {
