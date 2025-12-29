@@ -150,7 +150,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
 
       if (results.length > 2) {
         final detail = results[2] as Map<String, dynamic>;
-        _hydrateFromDetail(detail);
+        _hydrateFromDetail(_resolveLossAdjustmentDetail(detail));
       }
       if (mounted) {
         _refreshTypeAndWarehouseFields();
@@ -207,6 +207,51 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         ..clear()
         ..addAll(_extractLineItems(detail));
     });
+  }
+
+  Map<String, dynamic> _resolveLossAdjustmentDetail(Map<String, dynamic> detail) {
+    if (_looksLikeLossAdjustment(detail)) {
+      return detail;
+    }
+
+    Map<String, dynamic>? found;
+
+    void search(dynamic value) {
+      if (found != null) {
+        return;
+      }
+      if (value is Map<String, dynamic>) {
+        if (_looksLikeLossAdjustment(value)) {
+          found = value;
+          return;
+        }
+        for (final entry in value.values) {
+          search(entry);
+          if (found != null) {
+            return;
+          }
+        }
+      } else if (value is List) {
+        for (final entry in value) {
+          search(entry);
+          if (found != null) {
+            return;
+          }
+        }
+      }
+    }
+
+    search(detail);
+    return found ?? detail;
+  }
+
+  bool _looksLikeLossAdjustment(Map<String, dynamic> map) {
+    final hasType = map.containsKey('type') || map.containsKey('adjustment_type');
+    final hasWarehouse = map.containsKey('warehouse_id') ||
+        map.containsKey('warehouseId') ||
+        map.containsKey('warehouses');
+    final hasTime = map.containsKey('time') || map.containsKey('date_create');
+    return hasType || hasWarehouse || hasTime;
   }
 
   List<StocktakeLineItem> _extractLineItems(dynamic source) {
