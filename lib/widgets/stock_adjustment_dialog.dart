@@ -367,75 +367,83 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   }
 
   Widget _buildItemsTable(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surfaceVariant,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: const [
-              Expanded(flex: 3, child: Text('Item')),
-              Expanded(flex: 2, child: Text('Lot Number')),
-              Expanded(flex: 2, child: Text('Current Quantity')),
-              Expanded(flex: 2, child: Text('Updated Quantity')),
-              Expanded(flex: 1, child: Text('Actions')),
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minWidth: constraints.maxWidth),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: const [
+                    Expanded(flex: 3, child: Text('Item')),
+                    Expanded(flex: 2, child: Text('Lot Number')),
+                    Expanded(flex: 2, child: Text('Current Quantity')),
+                    Expanded(flex: 2, child: Text('Updated Quantity')),
+                    Expanded(flex: 1, child: Text('Actions')),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              if (_lineItems.isEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: theme.dividerColor),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: const [
+                      Expanded(
+                        child: Text(
+                          'No Adjustment Item is added yet.',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                ..._lineItems.map(
+                  (item) => Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: theme.dividerColor),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(flex: 3, child: Text(item.commodityName)),
+                        Expanded(flex: 2, child: Text(item.lotNumber)),
+                        Expanded(flex: 2, child: Text(item.currentNumber)),
+                        Expanded(flex: 2, child: Text(item.updatedNumber)),
+                        Expanded(
+                          flex: 1,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: IconButton(
+                              icon: const Icon(Icons.delete_outline),
+                              tooltip: 'Remove item',
+                              onPressed: () => _removeLineItem(item),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
-        const SizedBox(height: 8),
-        if (_lineItems.isEmpty)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-            decoration: BoxDecoration(
-              border: Border.all(color: theme.dividerColor),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: const [
-                Expanded(
-                  child: Text(
-                    'No Adjustment Item is added yet.',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
-            ),
-          )
-        else
-          ..._lineItems.map(
-            (item) => Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                border: Border.all(color: theme.dividerColor),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Expanded(flex: 3, child: Text(item.commodityName)),
-                  Expanded(flex: 2, child: Text(item.lotNumber)),
-                  Expanded(flex: 2, child: Text(item.currentNumber)),
-                  Expanded(flex: 2, child: Text(item.updatedNumber)),
-                  Expanded(
-                    flex: 1,
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        tooltip: 'Remove item',
-                        onPressed: () => _removeLineItem(item),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
+      ),
     );
   }
 
