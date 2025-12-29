@@ -24,7 +24,8 @@ class InventoryHistoryTab extends StatefulWidget {
   State<InventoryHistoryTab> createState() => _InventoryHistoryTabState();
 }
 
-class _InventoryHistoryTabState extends State<InventoryHistoryTab> {
+class _InventoryHistoryTabState extends State<InventoryHistoryTab>
+    with AutomaticKeepAliveClientMixin {
   final _service = WarehouseHistoryService();
   final _scrollController = ScrollController();
   final _horizontalController = ScrollController();
@@ -176,6 +177,7 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
 
     return RefreshIndicator(
@@ -443,6 +445,9 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab> {
 
     return const SizedBox.shrink();
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
 class _InventoryHistoryHeader extends StatelessWidget {

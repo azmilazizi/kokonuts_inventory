@@ -21,7 +21,8 @@ class StockAdjustmentTab extends StatefulWidget {
   State<StockAdjustmentTab> createState() => StockAdjustmentTabState();
 }
 
-class StockAdjustmentTabState extends State<StockAdjustmentTab> {
+class StockAdjustmentTabState extends State<StockAdjustmentTab>
+    with AutomaticKeepAliveClientMixin {
   final _service = LossAdjustmentsService();
   final _scrollController = ScrollController();
   final _horizontalController = ScrollController();
@@ -175,6 +176,7 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final theme = Theme.of(context);
 
     return RefreshIndicator(
@@ -546,6 +548,9 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab> {
       child: SizedBox.shrink(),
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
 class _StockAdjustmentHeader extends StatelessWidget {
