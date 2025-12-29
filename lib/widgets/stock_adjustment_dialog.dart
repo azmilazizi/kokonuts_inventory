@@ -262,6 +262,14 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Close'),
         ),
+        OutlinedButton(
+          onPressed: _handleSaveDraft,
+          child: const Text('Save as Draft'),
+        ),
+        ElevatedButton(
+          onPressed: _handleSave,
+          child: const Text('Save'),
+        ),
       ],
     );
   }
@@ -481,6 +489,8 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         currentQuantity.isNotEmpty &&
         _updatedQuantityController.text.trim().isNotEmpty;
 
+    final readOnlyFillColor = theme.colorScheme.surfaceVariant.withOpacity(0.4);
+
     return Material(
       elevation: 6,
       color: theme.colorScheme.surface,
@@ -492,8 +502,10 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
             DropdownButtonFormField<String>(
               value: _selectedItemId,
               isExpanded: true,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Select an Item',
+                filled: !canSelectItem,
+                fillColor: readOnlyFillColor,
               ),
               items: _items
                   .map(
@@ -513,7 +525,11 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                   flex: 3,
                   child: DropdownButtonFormField<String>(
                     value: _selectedLotNumber,
-                    decoration: const InputDecoration(labelText: 'Lot Number'),
+                    decoration: InputDecoration(
+                      labelText: 'Lot Number',
+                      filled: !hasSelectedItem,
+                      fillColor: readOnlyFillColor,
+                    ),
                     items: _lots
                         .map(
                           (lot) => DropdownMenuItem(
@@ -534,7 +550,11 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                     readOnly: true,
                     enabled: hasSelectedItem,
                     initialValue: currentQuantity,
-                    decoration: const InputDecoration(labelText: 'Current Quantity'),
+                    decoration: InputDecoration(
+                      labelText: 'Current Quantity',
+                      filled: true,
+                      fillColor: readOnlyFillColor,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -553,21 +573,6 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                   icon: const Icon(Icons.check_circle_outline),
                   tooltip: 'Add item',
                   color: theme.colorScheme.primary,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                OutlinedButton(
-                  onPressed: _handleSaveDraft,
-                  child: const Text('Save as Draft'),
-                ),
-                const SizedBox(width: 12),
-                ElevatedButton(
-                  onPressed: _handleSave,
-                  child: const Text('Save'),
                 ),
               ],
             ),
