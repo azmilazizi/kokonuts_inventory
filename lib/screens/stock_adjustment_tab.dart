@@ -729,28 +729,30 @@ class _StockAdjustmentRow extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.visibility_outlined),
-                    tooltip: 'View adjustment',
-                    iconSize: 20,
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 36,
-                      height: 36,
+                  if (entry.status.trim() == '1')
+                    IconButton(
+                      icon: const Icon(Icons.visibility_outlined),
+                      tooltip: 'View adjustment',
+                      iconSize: 20,
+                      visualDensity: VisualDensity.compact,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 36,
+                        height: 36,
+                      ),
+                      onPressed: () => onAction('View', entry),
                     ),
-                    onPressed: () => onAction('View', entry),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.play_circle_outline),
-                    tooltip: 'Resume stocktake',
-                    iconSize: 20,
-                    visualDensity: VisualDensity.compact,
-                    constraints: const BoxConstraints.tightFor(
-                      width: 36,
-                      height: 36,
+                  if (entry.status.trim() != '1')
+                    IconButton(
+                      icon: const Icon(Icons.play_circle_outline),
+                      tooltip: 'Resume stocktake',
+                      iconSize: 20,
+                      visualDensity: VisualDensity.compact,
+                      constraints: const BoxConstraints.tightFor(
+                        width: 36,
+                        height: 36,
+                      ),
+                      onPressed: () => onAction('Edit', entry),
                     ),
-                    onPressed: () => onAction('Edit', entry),
-                  ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline),
                     tooltip: 'Delete adjustment',
