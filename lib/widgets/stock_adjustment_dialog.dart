@@ -7,6 +7,7 @@ import '../app/app_state.dart';
 import '../app/app_state_scope.dart';
 import '../services/loss_adjustments_service.dart';
 import '../services/stocktake_service.dart';
+import 'read_only_field_style.dart';
 
 class StockAdjustmentDialog extends StatefulWidget {
   const StockAdjustmentDialog({
@@ -353,10 +354,13 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   }
 
   Widget _buildTimeField() {
+    final theme = Theme.of(context);
     return TextFormField(
       controller: _timeController,
       readOnly: true,
-      decoration: const InputDecoration(
+      style: ReadOnlyFieldStyle.textStyle(theme),
+      decoration: ReadOnlyFieldStyle.decoration(
+        theme,
         labelText: 'Time',
       ),
     );
@@ -365,7 +369,6 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   Widget _buildTypeDropdown() {
     final isReadOnly = _isResumeMode;
     final theme = Theme.of(context);
-    final readOnlyFillColor = theme.colorScheme.surfaceVariant.withOpacity(0.4);
     final typeItems = isReadOnly
         ? const [DropdownMenuItem(value: 'type', child: Text('Type'))]
         : const [
@@ -386,26 +389,27 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                 _resetSelectedItem();
               });
             },
-      decoration: InputDecoration(
-        labelText: 'Type',
-        filled: isReadOnly,
-        fillColor: readOnlyFillColor,
-      ),
+      style: isReadOnly ? ReadOnlyFieldStyle.textStyle(theme) : null,
+      decoration: isReadOnly
+          ? ReadOnlyFieldStyle.decoration(
+              theme,
+              labelText: 'Type',
+            )
+          : const InputDecoration(labelText: 'Type'),
     );
   }
 
   Widget _buildWarehouseDropdown() {
     final isReadOnly = _isResumeMode;
     final theme = Theme.of(context);
-    final readOnlyFillColor = theme.colorScheme.surfaceVariant.withOpacity(0.4);
     if (isReadOnly) {
       return TextFormField(
         controller: _warehouseNameController,
         readOnly: true,
-        decoration: InputDecoration(
+        style: ReadOnlyFieldStyle.textStyle(theme),
+        decoration: ReadOnlyFieldStyle.decoration(
+          theme,
           labelText: 'Warehouse',
-          filled: true,
-          fillColor: readOnlyFillColor,
         ),
       );
     }
@@ -427,11 +431,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                 _resetSelectedItem();
               });
             },
-      decoration: InputDecoration(
-        labelText: 'Warehouse',
-        filled: isReadOnly,
-        fillColor: readOnlyFillColor,
-      ),
+      decoration: const InputDecoration(labelText: 'Warehouse'),
     );
   }
 
@@ -588,7 +588,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         currentQuantity.isNotEmpty &&
         _updatedQuantityController.text.trim().isNotEmpty;
 
-    final readOnlyFillColor = theme.colorScheme.surfaceVariant.withOpacity(0.4);
+    final readOnlyTextStyle = ReadOnlyFieldStyle.textStyle(theme);
 
     return Material(
       elevation: 6,
@@ -601,11 +601,13 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
             DropdownButtonFormField<String>(
               value: _selectedItemId,
               isExpanded: true,
-              decoration: InputDecoration(
-                labelText: 'Select an Item',
-                filled: !canSelectItem,
-                fillColor: readOnlyFillColor,
-              ),
+              decoration: canSelectItem
+                  ? const InputDecoration(labelText: 'Select an Item')
+                  : ReadOnlyFieldStyle.decoration(
+                      theme,
+                      labelText: 'Select an Item',
+                    ),
+              style: canSelectItem ? null : readOnlyTextStyle,
               items: availableItems
                   .map(
                     (item) => DropdownMenuItem(
@@ -624,11 +626,13 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                   flex: 3,
                   child: DropdownButtonFormField<String>(
                     value: effectiveSelectedLotNumber,
-                    decoration: InputDecoration(
-                      labelText: 'Lot Number',
-                      filled: !hasSelectedItem,
-                      fillColor: readOnlyFillColor,
-                    ),
+                    decoration: hasSelectedItem
+                        ? const InputDecoration(labelText: 'Lot Number')
+                        : ReadOnlyFieldStyle.decoration(
+                            theme,
+                            labelText: 'Lot Number',
+                          ),
+                    style: hasSelectedItem ? null : readOnlyTextStyle,
                     items: availableLots
                         .map(
                           (lot) => DropdownMenuItem(
@@ -662,10 +666,10 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                     readOnly: true,
                     enabled: hasSelectedItem,
                     controller: _currentQuantityController,
-                    decoration: InputDecoration(
+                    style: readOnlyTextStyle,
+                    decoration: ReadOnlyFieldStyle.decoration(
+                      theme,
                       labelText: 'Current Quantity',
-                      filled: true,
-                      fillColor: readOnlyFillColor,
                     ),
                   ),
                 ),

@@ -14,6 +14,7 @@ import '../services/purchase_order_detail_service.dart';
 import '../services/vendors_service.dart';
 import 'attachment_picker.dart';
 import 'currency_input_formatter.dart';
+import 'read_only_field_style.dart';
 import 'searchable_dropdown_form_field.dart';
 
 enum DiscountType { percentage, amount }
@@ -908,11 +909,12 @@ class _AddPurchaseOrderDialogState extends State<AddPurchaseOrderDialog> {
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _orderNumberController,
-                  decoration: const InputDecoration(
-                    labelText: 'Order number',
-                    filled: true,
-                  ),
                   readOnly: true,
+                  style: ReadOnlyFieldStyle.textStyle(theme),
+                  decoration: ReadOnlyFieldStyle.decoration(
+                    theme,
+                    labelText: 'Order number',
+                  ),
                 ),
                 const SizedBox(height: 12),
                 _OrderDateField(date: _orderDate, onTap: _pickOrderDate),
