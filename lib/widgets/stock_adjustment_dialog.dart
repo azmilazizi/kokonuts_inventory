@@ -298,40 +298,30 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 200),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              return SingleChildScrollView(
-                padding: const EdgeInsets.only(right: 8),
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    minWidth: constraints.maxWidth,
-                    maxWidth: constraints.maxWidth,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.only(right: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (widget.subtitle != null)
+                  Text(
+                    widget.subtitle!,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.primary,
+                    ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (widget.subtitle != null)
-                        Text(
-                          widget.subtitle!,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      if (widget.subtitle != null) const SizedBox(height: 12),
-                      _buildTimeField(),
-                      const SizedBox(height: 12),
-                      _buildTypeDropdown(),
-                      const SizedBox(height: 12),
-                      _buildWarehouseDropdown(),
-                      const SizedBox(height: 24),
-                      _buildItemsTable(theme),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
-              );
-            },
+                if (widget.subtitle != null) const SizedBox(height: 12),
+                _buildTimeField(),
+                const SizedBox(height: 12),
+                _buildTypeDropdown(),
+                const SizedBox(height: 12),
+                _buildWarehouseDropdown(),
+                const SizedBox(height: 24),
+                _buildItemsTable(theme),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
         ),
         Positioned(
