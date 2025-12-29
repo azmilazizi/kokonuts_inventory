@@ -459,8 +459,8 @@ class _InventoryHistoryHeader extends StatelessWidget {
   final ValueChanged<InventoryHistorySortColumn> onSort;
 
   static const _columnFlex = [
-    3,
-    3,
+    2,
+    2,
     3,
     3,
     2,
@@ -480,6 +480,7 @@ class _InventoryHistoryHeader extends StatelessWidget {
             label: 'Code',
             flex: _columnFlex[0],
             theme: theme,
+            textAlign: TextAlign.center,
             isActive: sortColumn == InventoryHistorySortColumn.code,
             ascending: sortAscending,
             onTap: () => onSort(InventoryHistorySortColumn.code),
@@ -571,8 +572,8 @@ class _InventoryHistoryRow extends StatelessWidget {
   final bool showTopBorder;
 
   static const _columnFlex = [
-    3,
-    3,
+    2,
+    2,
     3,
     3,
     2,
@@ -598,7 +599,11 @@ class _InventoryHistoryRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       child: Row(
         children: [
-          _DataCell(_displayValue(entry.code), flex: _columnFlex[0]),
+          _DataCell(
+            _displayValue(entry.code),
+            flex: _columnFlex[0],
+            textAlign: TextAlign.center,
+          ),
           _TypePillCell(
             entry.type,
             flex: _columnFlex[1],
