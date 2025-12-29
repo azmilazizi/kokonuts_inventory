@@ -459,8 +459,8 @@ class _InventoryHistoryHeader extends StatelessWidget {
   final ValueChanged<InventoryHistorySortColumn> onSort;
 
   static const _columnFlex = [
-    3,
-    3,
+    2,
+    2,
     3,
     3,
     2,
@@ -571,8 +571,8 @@ class _InventoryHistoryRow extends StatelessWidget {
   final bool showTopBorder;
 
   static const _columnFlex = [
-    3,
-    3,
+    2,
+    2,
     3,
     3,
     2,
