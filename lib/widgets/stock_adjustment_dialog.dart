@@ -253,32 +253,16 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         height: 640,
         child: _isLoading
             ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
-                : _loadingError != null
-                    ? _buildErrorState(theme)
-                    : _buildContent(theme),
+            : _loadingError != null
+                ? _buildErrorState(theme)
+                : _buildContent(theme),
       ),
-      actionsAlignment: MainAxisAlignment.end,
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
-        ),
-        OutlinedButton(
-          onPressed: _handleSaveDraft,
-          child: const Text('Save as Draft'),
-        ),
-        ElevatedButton(
-          onPressed: _handleSave,
-          child: const Text('Save'),
+          child: const Text('Close'),
         ),
       ],
-    );
-  }
-
-  TextStyle _dropdownTextStyle(ThemeData theme, bool isEnabled) {
-    final baseStyle = theme.textTheme.bodyMedium ?? const TextStyle();
-    return baseStyle.copyWith(
-      color: isEnabled ? baseStyle.color : theme.disabledColor,
     );
   }
 
@@ -345,10 +329,8 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   }
 
   Widget _buildTypeDropdown() {
-    final theme = Theme.of(context);
     return DropdownButtonFormField<String>(
       value: _selectedType,
-      style: _dropdownTextStyle(theme, true),
       items: const [
         DropdownMenuItem(value: 'loss', child: Text('Loss')),
         DropdownMenuItem(value: 'adjustment', child: Text('Adjustment Increase')),
@@ -364,10 +346,8 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   }
 
   Widget _buildWarehouseDropdown() {
-    final theme = Theme.of(context);
     return DropdownButtonFormField<String>(
       value: _selectedWarehouseId,
-      style: _dropdownTextStyle(theme, true),
       items: _warehouses
           .map(
             (warehouse) => DropdownMenuItem(
@@ -387,90 +367,75 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   }
 
   Widget _buildItemsTable(ThemeData theme) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final minTableWidth = 900.0;
-        final maxWidth = constraints.maxWidth;
-        final tableWidth = maxWidth.isFinite && maxWidth > minTableWidth
-            ? maxWidth
-            : minTableWidth;
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minWidth: tableWidth),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceVariant,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: const [
-                      Expanded(flex: 3, child: Text('Item')),
-                      Expanded(flex: 2, child: Text('Lot Number')),
-                      Expanded(flex: 2, child: Text('Current Quantity')),
-                      Expanded(flex: 2, child: Text('Updated Quantity')),
-                      Expanded(flex: 1, child: Text('Actions')),
-                    ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceVariant,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: const [
+              Expanded(flex: 3, child: Text('Item')),
+              Expanded(flex: 2, child: Text('Lot Number')),
+              Expanded(flex: 2, child: Text('Current Quantity')),
+              Expanded(flex: 2, child: Text('Updated Quantity')),
+              Expanded(flex: 1, child: Text('Actions')),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (_lineItems.isEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            decoration: BoxDecoration(
+              border: Border.all(color: theme.dividerColor),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: const [
+                Expanded(
+                  child: Text(
+                    'No Adjustment Item is added yet.',
+                    textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 8),
-                if (_lineItems.isEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: theme.dividerColor),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: const [
-                        Expanded(
-                          child: Text(
-                            'No Adjustment Item is added yet.',
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  ..._lineItems.map(
-                    (item) => Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: theme.dividerColor),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(flex: 3, child: Text(item.commodityName)),
-                          Expanded(flex: 2, child: Text(item.lotNumber)),
-                          Expanded(flex: 2, child: Text(item.currentNumber)),
-                          Expanded(flex: 2, child: Text(item.updatedNumber)),
-                          Expanded(
-                            flex: 1,
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: IconButton(
-                                icon: const Icon(Icons.delete_outline),
-                                tooltip: 'Remove item',
-                                onPressed: () => _removeLineItem(item),
-                              ),
-                            ),
-                          ),
-                        ],
+              ],
+            ),
+          )
+        else
+          ..._lineItems.map(
+            (item) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                border: Border.all(color: theme.dividerColor),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Expanded(flex: 3, child: Text(item.commodityName)),
+                  Expanded(flex: 2, child: Text(item.lotNumber)),
+                  Expanded(flex: 2, child: Text(item.currentNumber)),
+                  Expanded(flex: 2, child: Text(item.updatedNumber)),
+                  Expanded(
+                    flex: 1,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        tooltip: 'Remove item',
+                        onPressed: () => _removeLineItem(item),
                       ),
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
           ),
-        );
-      },
+      ],
     );
   }
 
@@ -499,36 +464,35 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     return Material(
       elevation: 6,
       color: theme.colorScheme.surface,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isCompact = constraints.maxWidth < 640;
-          return Padding(
-            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DropdownButtonFormField<String>(
+              value: _selectedItemId,
+              isExpanded: true,
+              decoration: const InputDecoration(
+                labelText: 'Select an Item',
+              ),
+              items: _items
+                  .map(
+                    (item) => DropdownMenuItem(
+                      value: item.id,
+                      child: Text(item.displayName),
+                    ),
+                  )
+                  .toList(),
+              onChanged: canSelectItem ? (value) => _handleItemSelected(value) : null,
+            ),
+            const SizedBox(height: 12),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                DropdownButtonFormField<String>(
-                  value: _selectedItemId,
-                  isExpanded: true,
-                  style: _dropdownTextStyle(theme, canSelectItem),
-                  decoration: const InputDecoration(
-                    labelText: 'Select an Item',
-                  ),
-                  items: _items
-                      .map(
-                        (item) => DropdownMenuItem(
-                          value: item.id,
-                          child: Text(item.displayName),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: canSelectItem ? (value) => _handleItemSelected(value) : null,
-                ),
-                const SizedBox(height: 12),
-                if (isCompact) ...[
-                  DropdownButtonFormField<String>(
+                Expanded(
+                  flex: 3,
+                  child: DropdownButtonFormField<String>(
                     value: _selectedLotNumber,
-                    style: _dropdownTextStyle(theme, hasSelectedItem),
                     decoration: const InputDecoration(labelText: 'Lot Number'),
                     items: _lots
                         .map(
@@ -542,88 +506,53 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                         ? (value) => setState(() => _selectedLotNumber = value)
                         : null,
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
                     readOnly: true,
                     enabled: hasSelectedItem,
                     initialValue: currentQuantity,
                     decoration: const InputDecoration(labelText: 'Current Quantity'),
                   ),
-                  const SizedBox(height: 12),
-                  TextFormField(
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
                     controller: _updatedQuantityController,
                     enabled: hasSelectedItem,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(labelText: 'Updated Quantity'),
                   ),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: IconButton(
-                      onPressed: canAdd ? _handleAddLineItem : null,
-                      icon: const Icon(Icons.check_circle_outline),
-                      tooltip: 'Add item',
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                ] else
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: DropdownButtonFormField<String>(
-                          value: _selectedLotNumber,
-                          style: _dropdownTextStyle(theme, hasSelectedItem),
-                          decoration: const InputDecoration(labelText: 'Lot Number'),
-                          items: _lots
-                              .map(
-                                (lot) => DropdownMenuItem(
-                                  value: lot.lotNumber,
-                                  child: Text(lot.lotNumber),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: hasSelectedItem
-                              ? (value) => setState(() => _selectedLotNumber = value)
-                              : null,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: TextFormField(
-                          readOnly: true,
-                          enabled: hasSelectedItem,
-                          initialValue: currentQuantity,
-                          decoration: const InputDecoration(labelText: 'Current Quantity'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 2,
-                        child: TextFormField(
-                          controller: _updatedQuantityController,
-                          enabled: hasSelectedItem,
-                          keyboardType:
-                              const TextInputType.numberWithOptions(decimal: true),
-                          decoration:
-                              const InputDecoration(labelText: 'Updated Quantity'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      IconButton(
-                        onPressed: canAdd ? _handleAddLineItem : null,
-                        icon: const Icon(Icons.check_circle_outline),
-                        tooltip: 'Add item',
-                        color: theme.colorScheme.primary,
-                      ),
-                    ],
-                  ),
+                ),
+                const SizedBox(width: 12),
+                IconButton(
+                  onPressed: canAdd ? _handleAddLineItem : null,
+                  icon: const Icon(Icons.check_circle_outline),
+                  tooltip: 'Add item',
+                  color: theme.colorScheme.primary,
+                ),
               ],
             ),
-          );
-        },
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                OutlinedButton(
+                  onPressed: _handleSaveDraft,
+                  child: const Text('Save as Draft'),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton(
+                  onPressed: _handleSave,
+                  child: const Text('Save'),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
