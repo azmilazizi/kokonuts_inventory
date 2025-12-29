@@ -84,11 +84,12 @@ class StocktakeService {
 
   Future<List<StocktakeLotOption>> fetchLots({
     required String itemId,
+    required String warehouseId,
     required Map<String, String> headers,
   }) async {
     final uri = Uri.parse(
-      'https://crm.kokonuts.my/warehouse/api/v1/item/$itemId/lots',
-    );
+      'https://crm.kokonuts.my/warehouse/api/v1/item/$itemId/inventory',
+    ).replace(queryParameters: {'warehouse_id': warehouseId});
 
     http.Response response;
     try {
@@ -99,7 +100,7 @@ class StocktakeService {
 
     if (response.statusCode != 200) {
       throw StocktakeServiceException(
-        'Lots request failed with status ${response.statusCode}: ${response.body}',
+        'Inventory request failed with status ${response.statusCode}: ${response.body}',
       );
     }
 
