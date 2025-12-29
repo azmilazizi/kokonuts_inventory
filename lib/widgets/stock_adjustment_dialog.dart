@@ -374,12 +374,14 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   Widget _buildTypeDropdown() {
     final isReadOnly = _isResumeMode;
     final theme = Theme.of(context);
+    final effectiveSelectedType =
+        _selectedType ?? _resolveTypeSelection(_detailType);
     final typeItems = isReadOnly
         ? [
             DropdownMenuItem(
-              value: _selectedType ?? '',
+              value: effectiveSelectedType ?? '',
               child: Text(
-                _formatTypeLabel(_selectedType) ?? 'Type',
+                _formatTypeLabel(effectiveSelectedType) ?? 'Type',
               ),
             ),
           ]
@@ -391,7 +393,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
             ),
           ];
     return DropdownButtonFormField<String>(
-      value: _selectedType,
+      value: effectiveSelectedType,
       items: typeItems,
       onChanged: isReadOnly
           ? null
