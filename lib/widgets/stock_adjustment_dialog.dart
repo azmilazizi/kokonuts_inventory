@@ -43,6 +43,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   List<WarehouseOption> _warehouses = const [];
   List<StocktakeItemOption> _items = const [];
   List<StocktakeLotOption> _lots = const [];
+  final Map<String, List<StocktakeLotOption>> _lotsByItemId = {};
 
   final List<StocktakeLineItem> _lineItems = [];
 
@@ -476,8 +477,30 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         _selectedWarehouseId!.trim().isNotEmpty;
     final hasSelectedItem =
         _selectedItemId != null && _selectedItemId!.trim().isNotEmpty;
-    final selectedLot = _lots.firstWhere(
+
+    final adjustedLotsByItemId = <String, Set<String>>{};
+    for (final item in _lineItems) {
+      final itemId = item.itemId;
+      if (itemId == null || itemId.trim().isEmpty) {
+        continue;
+      }
+      adjustedLotsByItemId.putIfAbsent(itemId, () => <String>{}).add(item.lotNumber);
+    }
+
+    final adjustedLotsForSelectedItem = hasSelectedItem
+        ? adjustedLotsByItemId[_selectedItemId] ?? <String>{}
+        : <String>{};
+    final availableLots = _lots
+        .where((lot) => !adjustedLotsForSelectedItem.contains(lot.lotNumber))
+        .toList();
+    final effectiveSelectedLotNumber = availableLots.any(
       (lot) => lot.lotNumber == _selectedLotNumber,
+    )
+        ? _selectedLotNumber
+        : null;
+
+    final selectedLot = availableLots.firstWhere(
+      (lot) => lot.lotNumber == effectiveSelectedLotNumber,
       orElse: () => const StocktakeLotOption(
         lotNumber: '',
         inventoryNumber: '',
@@ -489,16 +512,21 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       _currentQuantityController.text = currentQuantity;
     }
 
-    final adjustedItemIds = _lineItems
-        .map((item) => item.itemId)
-        .whereType<String>()
-        .toSet();
     final availableItems = _items
-        .where((item) => !adjustedItemIds.contains(item.id))
+        .where((item) {
+          final adjustedLots = adjustedLotsByItemId[item.id] ?? <String>{};
+          final knownLots = _lotsByItemId[item.id];
+          if (knownLots == null) {
+            return true;
+          }
+          return knownLots.any(
+            (lot) => !adjustedLots.contains(lot.lotNumber),
+          );
+        })
         .toList();
 
     final canAdd = _selectedItemId != null &&
-        _selectedLotNumber != null &&
+        effectiveSelectedLotNumber != null &&
         currentQuantity.isNotEmpty &&
         _updatedQuantityController.text.trim().isNotEmpty;
 
@@ -537,13 +565,13 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                 Expanded(
                   flex: 3,
                   child: DropdownButtonFormField<String>(
-                    value: _selectedLotNumber,
+                    value: effectiveSelectedLotNumber,
                     decoration: InputDecoration(
                       labelText: 'Lot Number',
                       filled: !hasSelectedItem,
                       fillColor: readOnlyFillColor,
                     ),
-                    items: _lots
+                    items: availableLots
                         .map(
                           (lot) => DropdownMenuItem(
                             value: lot.lotNumber,
@@ -555,7 +583,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                         ? (value) {
                             setState(() {
                               _selectedLotNumber = value;
-                              final selected = _lots.firstWhere(
+                              final selected = availableLots.firstWhere(
                                 (lot) => lot.lotNumber == value,
                                 orElse: () => const StocktakeLotOption(
                                   lotNumber: '',
@@ -612,6 +640,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     _selectedItemId = null;
     _selectedLotNumber = null;
     _lots = const [];
+    _lotsByItemId.clear();
     _currentQuantityController.clear();
     _updatedQuantityController.clear();
   }
@@ -662,6 +691,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       }
       setState(() {
         _lots = lots;
+        _lotsByItemId[itemId] = lots;
       });
     } catch (_) {
       if (!mounted) {
