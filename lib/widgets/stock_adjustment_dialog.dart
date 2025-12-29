@@ -911,7 +911,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
           ),
         ),
       );
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
     } on LossAdjustmentsException catch (error) {
       if (!mounted) {
         return;

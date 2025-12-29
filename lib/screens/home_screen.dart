@@ -32,6 +32,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       GlobalKey<PurchaseOrdersTabState>();
   final GlobalKey<ExpensesTabState> _expensesTabKey =
       GlobalKey<ExpensesTabState>();
+  final GlobalKey<StockAdjustmentTabState> _stockAdjustmentTabKey =
+      GlobalKey<StockAdjustmentTabState>();
 
   @override
   void initState() {
@@ -50,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       _HomeTab(
         title: 'Stock Adjustment',
         icon: Icons.tune_outlined,
-        builder: (_, __) => const StockAdjustmentTab(),
+        builder: (_, __) => StockAdjustmentTab(key: _stockAdjustmentTabKey),
       ),
       _HomeTab(
         title: 'Inventory History',
@@ -128,13 +130,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         }
         break;
       case 2:
-        await showDialog<void>(
+        final didSave = await showDialog<bool>(
           context: context,
           barrierDismissible: false,
           builder: (context) => const StockAdjustmentDialog(
             title: 'Stocktake',
           ),
         );
+        if (didSave == true && mounted) {
+          _stockAdjustmentTabKey.currentState?.refreshStockAdjustments();
+        }
         break;
       default:
         await showDialog<void>(
