@@ -9,6 +9,8 @@ class LossAdjustmentsService {
 
   static const _baseUrl =
       'https://crm.kokonuts.my/warehouse/api/v1/loss_adjustments';
+  static const _detailBaseUrl =
+      'https://crm.kokonuts.my/warehouse/api/v1/loss_adjustment';
 
   Future<LossAdjustmentsPage> fetchLossAdjustments({
     required int page,
@@ -46,6 +48,58 @@ class LossAdjustmentsService {
     final pagination = _resolvePagination(decoded, currentPage: page, perPage: perPage);
 
     return LossAdjustmentsPage(entries: entries, hasMore: pagination.hasMore);
+  }
+
+  Future<Map<String, dynamic>> fetchLossAdjustmentDetail({
+    required String id,
+    required Map<String, String> headers,
+  }) async {
+    final uri = Uri.parse('$_detailBaseUrl/$id');
+
+    http.Response response;
+    try {
+      response = await _client.get(uri, headers: headers);
+    } catch (error) {
+      throw LossAdjustmentsException('Failed to reach server: $error');
+    }
+
+    if (response.statusCode != 200) {
+      throw LossAdjustmentsException(
+        'Request failed with status ${response.statusCode}: ${response.body}',
+      );
+    }
+
+    dynamic decoded;
+    try {
+      decoded = jsonDecode(response.body);
+    } catch (error) {
+      throw LossAdjustmentsException('Unable to parse response: $error');
+    }
+
+    if (decoded is Map<String, dynamic>) {
+      return decoded;
+    }
+    throw LossAdjustmentsException('Unexpected response format.');
+  }
+
+  Future<void> deleteLossAdjustment({
+    required String id,
+    required Map<String, String> headers,
+  }) async {
+    final uri = Uri.parse('$_detailBaseUrl/$id');
+
+    http.Response response;
+    try {
+      response = await _client.delete(uri, headers: headers);
+    } catch (error) {
+      throw LossAdjustmentsException('Failed to reach server: $error');
+    }
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw LossAdjustmentsException(
+        'Delete failed with status ${response.statusCode}: ${response.body}',
+      );
+    }
   }
 
   List<Map<String, dynamic>> _extractLossAdjustments(dynamic decoded) {
