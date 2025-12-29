@@ -390,8 +390,10 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final minTableWidth = 900.0;
-        final tableWidth =
-            constraints.maxWidth > minTableWidth ? constraints.maxWidth : minTableWidth;
+        final maxWidth = constraints.maxWidth;
+        final tableWidth = maxWidth.isFinite && maxWidth > minTableWidth
+            ? maxWidth
+            : minTableWidth;
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: ConstrainedBox(
