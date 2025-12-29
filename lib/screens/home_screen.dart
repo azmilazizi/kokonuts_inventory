@@ -51,7 +51,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ),
       _HomeTab(
         title: 'Stock Adjustment',
-        icon: Icons.tune_outlined,
+        icon: Icons.qr_code_scanner_outlined,
         builder: (_, __) => StockAdjustmentTab(key: _stockAdjustmentTabKey),
       ),
       _HomeTab(
