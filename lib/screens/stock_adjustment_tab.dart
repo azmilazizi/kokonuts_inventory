@@ -18,10 +18,10 @@ class StockAdjustmentTab extends StatefulWidget {
   const StockAdjustmentTab({super.key});
 
   @override
-  State<StockAdjustmentTab> createState() => _StockAdjustmentTabState();
+  State<StockAdjustmentTab> createState() => StockAdjustmentTabState();
 }
 
-class _StockAdjustmentTabState extends State<StockAdjustmentTab> {
+class StockAdjustmentTabState extends State<StockAdjustmentTab> {
   final _service = LossAdjustmentsService();
   final _scrollController = ScrollController();
   final _horizontalController = ScrollController();
@@ -167,6 +167,10 @@ class _StockAdjustmentTabState extends State<StockAdjustmentTab> {
         });
       }
     }
+  }
+
+  Future<void> refreshStockAdjustments() async {
+    await _fetchPage(reset: true);
   }
 
   @override
@@ -366,10 +370,7 @@ class _StockAdjustmentTabState extends State<StockAdjustmentTab> {
       if (!mounted) {
         return;
       }
-      setState(() {
-        _entriesByKey.remove(_entryStorageKey(entry));
-        _rebuildDisplayEntries();
-      });
+      await _fetchPage(reset: true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Stock adjustment deleted.')),
       );
