@@ -264,17 +264,19 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final screenHeight = MediaQuery.of(context).size.height;
     final dialogWidth = (MediaQuery.of(context).size.width * 0.95).clamp(
       520.0,
       1100.0,
     );
+    final dialogHeight = (screenHeight * 0.85).clamp(420.0, 720.0);
 
     return AlertDialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
       title: Text(widget.title),
       content: SizedBox(
         width: dialogWidth,
-        height: 640,
+        height: dialogHeight,
         child: _isLoading
             ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
             : _loadingError != null
@@ -310,10 +312,10 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   }
 
   Widget _buildContent(ThemeData theme) {
-    return Stack(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 200),
+        Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.only(right: 8),
             child: Column(
@@ -340,12 +342,8 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
             ),
           ),
         ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          child: _buildAddItemFooter(theme),
-        ),
+        const SizedBox(height: 12),
+        _buildAddItemFooter(theme),
       ],
     );
   }
@@ -581,7 +579,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       _currentQuantityController.text = currentQuantity;
     }
 
-    final availableItems = _items
+    var availableItems = _items
         .where((item) {
           final adjustedLots = adjustedLotsByItemId[item.id] ?? <String>{};
           final knownLots = _lotsByItemId[item.id];
@@ -593,6 +591,22 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
           );
         })
         .toList();
+    if (hasSelectedItem &&
+        !availableItems.any((item) => item.id == _selectedItemId)) {
+      final selectedItem = _items.firstWhere(
+        (item) => item.id == _selectedItemId,
+        orElse: () => const StocktakeItemOption(
+          id: '',
+          skuCode: null,
+          skuName: 'Unknown item',
+          total: null,
+          unitId: null,
+        ),
+      );
+      if (selectedItem.id.isNotEmpty) {
+        availableItems = [...availableItems, selectedItem];
+      }
+    }
 
     final canAdd = _selectedItemId != null &&
         effectiveSelectedLotNumber != null &&
