@@ -163,22 +163,25 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     final rawType =
         _readString(detail, const ['type', 'adjustment_type', 'loss_type']);
     final warehouseId = _readString(detail, const ['warehouse_id', 'warehouseId']);
+    final warehousesId = _readWarehouseId(detail['warehouses']);
+    final warehouseName = _readString(detail, const ['warehouse_name', 'warehouseName']);
 
     final nestedWarehouse = detail['warehouse'];
     final nestedWarehouseId = nestedWarehouse is Map<String, dynamic>
         ? _readString(nestedWarehouse, const ['warehouse_id', 'id'])
         : null;
+    final nestedWarehouseName = nestedWarehouse is Map<String, dynamic>
+        ? _readString(nestedWarehouse, const ['warehouse_name', 'name', 'title'])
+        : null;
+
+    final resolvedWarehouseId = _resolveWarehouseSelection(
+      warehouseId: warehouseId ?? warehousesId ?? nestedWarehouseId,
+      warehouseName: warehouseName ?? nestedWarehouseName,
+    );
 
     setState(() {
-      final normalizedType = rawType?.toLowerCase();
-      _selectedType = normalizedType == null
-          ? null
-          : normalizedType.contains('adjustment')
-              ? 'adjustment'
-              : normalizedType.contains('loss')
-                  ? 'loss'
-                  : normalizedType;
-      _selectedWarehouseId = warehouseId ?? nestedWarehouseId;
+      _selectedType = _resolveTypeSelection(rawType);
+      _selectedWarehouseId = resolvedWarehouseId;
       _lineItems
         ..clear()
         ..addAll(_extractLineItems(detail));
@@ -918,6 +921,68 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       if (value is num || value is bool) {
         return value.toString();
       }
+    }
+    return null;
+  }
+
+  String? _resolveTypeSelection(String? rawType) {
+    if (rawType == null) {
+      return null;
+    }
+    final normalized = rawType.trim().toLowerCase();
+    if (normalized.isEmpty) {
+      return null;
+    }
+    if (normalized == 'loss') {
+      return 'loss';
+    }
+    if (normalized == 'adjustment') {
+      return 'adjustment';
+    }
+    if (normalized.contains('loss')) {
+      return 'loss';
+    }
+    if (normalized.contains('adjustment')) {
+      return 'adjustment';
+    }
+    return normalized;
+  }
+
+  String? _resolveWarehouseSelection({
+    required String? warehouseId,
+    required String? warehouseName,
+  }) {
+    if (warehouseId != null && warehouseId.trim().isNotEmpty) {
+      final trimmed = warehouseId.trim();
+      final matchById = _warehouses
+          .where((warehouse) => warehouse.id == trimmed)
+          .toList(growable: false);
+      if (matchById.isNotEmpty) {
+        return matchById.first.id;
+      }
+    }
+
+    if (warehouseName != null && warehouseName.trim().isNotEmpty) {
+      final normalized = warehouseName.trim().toLowerCase();
+      for (final warehouse in _warehouses) {
+        if (warehouse.name.trim().toLowerCase() == normalized) {
+          return warehouse.id;
+        }
+      }
+    }
+
+    return warehouseId;
+  }
+
+  String? _readWarehouseId(dynamic value) {
+    if (value is String || value is num || value is bool) {
+      return value.toString();
+    }
+    if (value is List && value.isNotEmpty) {
+      return _readWarehouseId(value.first);
+    }
+    if (value is Map<String, dynamic>) {
+      return _readString(value, const ['warehouse_id', 'id']);
     }
     return null;
   }
