@@ -335,7 +335,12 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         DropdownMenuItem(value: 'loss', child: Text('Loss')),
         DropdownMenuItem(value: 'adjustment', child: Text('Adjustment Increase')),
       ],
-      onChanged: (value) => setState(() => _selectedType = value),
+      onChanged: (value) {
+        setState(() {
+          _selectedType = value;
+          _resetSelectedItem();
+        });
+      },
       decoration: const InputDecoration(labelText: 'Type'),
     );
   }
@@ -351,19 +356,17 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
             ),
           )
           .toList(),
-      onChanged: (value) => setState(() => _selectedWarehouseId = value),
+      onChanged: (value) {
+        setState(() {
+          _selectedWarehouseId = value;
+          _resetSelectedItem();
+        });
+      },
       decoration: const InputDecoration(labelText: 'Warehouse'),
     );
   }
 
   Widget _buildItemsTable(ThemeData theme) {
-    if (_lineItems.isEmpty) {
-      return Text(
-        'No adjusted items added yet.',
-        style: theme.textTheme.bodyMedium,
-      );
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -384,40 +387,65 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
           ),
         ),
         const SizedBox(height: 8),
-        ..._lineItems.map(
-          (item) => Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        if (_lineItems.isEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
             decoration: BoxDecoration(
               border: Border.all(color: theme.dividerColor),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
-              children: [
-                Expanded(flex: 3, child: Text(item.commodityName)),
-                Expanded(flex: 2, child: Text(item.lotNumber)),
-                Expanded(flex: 2, child: Text(item.currentNumber)),
-                Expanded(flex: 2, child: Text(item.updatedNumber)),
+              children: const [
                 Expanded(
-                  flex: 1,
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      icon: const Icon(Icons.delete_outline),
-                      tooltip: 'Remove item',
-                      onPressed: () => _removeLineItem(item),
-                    ),
+                  child: Text(
+                    'No Adjustment Item is added yet.',
+                    textAlign: TextAlign.center,
                   ),
                 ),
               ],
             ),
+          )
+        else
+          ..._lineItems.map(
+            (item) => Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                border: Border.all(color: theme.dividerColor),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Expanded(flex: 3, child: Text(item.commodityName)),
+                  Expanded(flex: 2, child: Text(item.lotNumber)),
+                  Expanded(flex: 2, child: Text(item.currentNumber)),
+                  Expanded(flex: 2, child: Text(item.updatedNumber)),
+                  Expanded(
+                    flex: 1,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        icon: const Icon(Icons.delete_outline),
+                        tooltip: 'Remove item',
+                        onPressed: () => _removeLineItem(item),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
       ],
     );
   }
 
   Widget _buildAddItemFooter(ThemeData theme) {
+    final canSelectItem = _selectedType != null &&
+        _selectedType!.trim().isNotEmpty &&
+        _selectedWarehouseId != null &&
+        _selectedWarehouseId!.trim().isNotEmpty;
+    final hasSelectedItem =
+        _selectedItemId != null && _selectedItemId!.trim().isNotEmpty;
     final selectedLot = _lots.firstWhere(
       (lot) => lot.lotNumber == _selectedLotNumber,
       orElse: () => const StocktakeLotOption(
@@ -455,7 +483,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                     ),
                   )
                   .toList(),
-              onChanged: (value) => _handleItemSelected(value),
+              onChanged: canSelectItem ? (value) => _handleItemSelected(value) : null,
             ),
             const SizedBox(height: 12),
             Row(
@@ -474,8 +502,9 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                           ),
                         )
                         .toList(),
-                    onChanged: (value) =>
-                        setState(() => _selectedLotNumber = value),
+                    onChanged: hasSelectedItem
+                        ? (value) => setState(() => _selectedLotNumber = value)
+                        : null,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -483,6 +512,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                   flex: 2,
                   child: TextFormField(
                     readOnly: true,
+                    enabled: hasSelectedItem,
                     initialValue: currentQuantity,
                     decoration: const InputDecoration(labelText: 'Current Quantity'),
                   ),
@@ -492,6 +522,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                   flex: 2,
                   child: TextFormField(
                     controller: _updatedQuantityController,
+                    enabled: hasSelectedItem,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(labelText: 'Updated Quantity'),
                   ),
@@ -524,6 +555,13 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         ),
       ),
     );
+  }
+
+  void _resetSelectedItem() {
+    _selectedItemId = null;
+    _selectedLotNumber = null;
+    _lots = const [];
+    _updatedQuantityController.clear();
   }
 
   void _handleItemSelected(String? itemId) {
