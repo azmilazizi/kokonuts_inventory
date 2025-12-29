@@ -309,6 +309,29 @@ class _StockAdjustmentTabState extends State<StockAdjustmentTab> {
       return;
     }
 
+    final confirmDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete stock adjustment?'),
+        content: const Text(
+          'This action cannot be undone. Do you want to continue?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirmDelete != true) {
+      return;
+    }
+
     final appState = AppStateScope.of(context);
     final token = await appState.getValidAuthToken();
     if (!mounted) {
@@ -845,8 +868,9 @@ String _statusLabel(String value) {
     case 'not yet approved':
       return 'Not Yet Approved';
     case '1':
+    case 'adjusted':
     case 'approved':
-      return 'Approved';
+      return 'Adjusted';
     default:
       return trimmed;
   }
@@ -868,6 +892,7 @@ _PillColors _statusPillColors(ThemeData theme, String value) {
         foreground: Color(0xFFB54708),
       );
     case '1':
+    case 'adjusted':
     case 'approved':
       return const _PillColors(
         background: Color(0xFFE6F6EE),
