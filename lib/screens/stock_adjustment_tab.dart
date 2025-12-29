@@ -677,7 +677,7 @@ class _StockAdjustmentRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
       child: Row(
         children: [
-          _DataCell(_displayValue(entry.type), flex: _columnFlex[0]),
+          _DataCell(_displayValue(_formatType(entry.type)), flex: _columnFlex[0]),
           _DataCell(
             _displayValue(entry.dateCreated),
             flex: _columnFlex[1],
@@ -689,7 +689,7 @@ class _StockAdjustmentRow extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           _StatusPillCell(entry.status, flex: _columnFlex[3]),
-          _DataCell(_displayValue(entry.creator), flex: _columnFlex[4]),
+          _DataCell(_displayValue(_firstName(entry.creator)), flex: _columnFlex[4]),
           const SizedBox(width: 12),
           Expanded(
             flex: _columnFlex[5],
@@ -710,8 +710,8 @@ class _StockAdjustmentRow extends StatelessWidget {
                     onPressed: () => onAction('View', entry),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.edit_outlined),
-                    tooltip: 'Edit adjustment',
+                    icon: const Icon(Icons.play_circle_outline),
+                    tooltip: 'Resume stocktake',
                     iconSize: 20,
                     visualDensity: VisualDensity.compact,
                     constraints: const BoxConstraints.tightFor(
@@ -744,6 +744,24 @@ class _StockAdjustmentRow extends StatelessWidget {
   String _displayValue(String value) {
     final trimmed = value.trim();
     return trimmed.isEmpty ? '—' : trimmed;
+  }
+
+  String _formatType(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return trimmed;
+    }
+    final lower = trimmed.toLowerCase();
+    return lower.isEmpty ? trimmed : '${lower[0].toUpperCase()}${lower.substring(1)}';
+  }
+
+  String _firstName(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return trimmed;
+    }
+    final parts = trimmed.split(RegExp(r'\s+'));
+    return parts.isEmpty ? trimmed : parts.first;
   }
 }
 
