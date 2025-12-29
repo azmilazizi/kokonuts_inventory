@@ -203,12 +203,14 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
             _readString(value, const ['updates_number', 'updated_number']);
         final commodityName =
             _readString(value, const ['commodity_name', 'item_name', 'name']);
-        final itemId = _readString(value, const ['item_id', 'itemId']);
+        final itemId = _readString(value, const ['item_id', 'itemId', 'items']);
+        final unitId = _readString(value, const ['unit', 'unit_id', 'unitId']);
 
         if (lotNumber != null && currentNumber != null) {
           items.add(
             StocktakeLineItem(
               itemId: itemId,
+              unitId: unitId,
               commodityName: commodityName ?? 'Unknown item',
               lotNumber: lotNumber,
               currentNumber: currentNumber,
@@ -716,6 +718,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         skuCode: null,
         skuName: 'Unknown item',
         total: null,
+        unitId: null,
       ),
     );
     final lotOption = _lots.firstWhere(
@@ -738,7 +741,8 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       _lineItems.add(
         StocktakeLineItem(
           itemId: itemOption.id,
-          commodityName: itemOption.skuName,
+          unitId: itemOption.unitId,
+          commodityName: itemOption.commodityName,
           lotNumber: lotOption.lotNumber,
           currentNumber: lotOption.inventoryNumber,
           updatedNumber: updatedQuantity,
@@ -872,10 +876,12 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     final lineItems = _lineItems
         .map(
           (item) => {
-            'item_id': item.itemId,
-            'lot_number': item.lotNumber,
+            'items': item.itemId,
+            'unit': item.unitId,
             'current_number': item.currentNumber,
-            'updated_number': item.updatedNumber,
+            'updates_number': item.updatedNumber,
+            'lot_number': item.lotNumber,
+            'commodity_name': item.commodityName,
           },
         )
         .toList();
@@ -885,8 +891,12 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       'warehouse_id': warehouseId,
       'time': _timeController.text.trim(),
       'items': lineItems,
-      'status': isDraft ? 'draft' : 'submitted',
+      'status': isDraft ? 2 : 1,
     };
+    final currentUserId = AppStateScope.of(context).currentUserId?.trim();
+    if (currentUserId != null && currentUserId.isNotEmpty) {
+      payload['addfrom'] = currentUserId;
+    }
 
     final adjustmentId = widget.adjustmentId?.trim();
     if (adjustmentId != null && adjustmentId.isNotEmpty) {
@@ -916,6 +926,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
 class StocktakeLineItem {
   StocktakeLineItem({
     required this.itemId,
+    required this.unitId,
     required this.commodityName,
     required this.lotNumber,
     required this.currentNumber,
@@ -923,6 +934,7 @@ class StocktakeLineItem {
   });
 
   final String? itemId;
+  final String? unitId;
   final String commodityName;
   final String lotNumber;
   final String currentNumber;
