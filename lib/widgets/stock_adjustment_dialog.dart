@@ -215,12 +215,16 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     }
 
     Map<String, dynamic>? found;
+    dynamic siblingItems;
 
     void search(dynamic value) {
       if (found != null) {
         return;
       }
       if (value is Map<String, dynamic>) {
+        if (value.containsKey('items')) {
+          siblingItems = value['items'];
+        }
         if (_looksLikeLossAdjustment(value)) {
           found = value;
           return;
@@ -242,7 +246,16 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     }
 
     search(detail);
-    return found ?? detail;
+    if (found == null) {
+      return detail;
+    }
+    if (!found!.containsKey('items') && siblingItems != null) {
+      return {
+        ...found!,
+        'items': siblingItems,
+      };
+    }
+    return found!;
   }
 
   bool _looksLikeLossAdjustment(Map<String, dynamic> map) {
