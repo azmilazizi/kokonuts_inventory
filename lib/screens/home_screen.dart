@@ -5,17 +5,15 @@ import '../app/app_state.dart';
 import '../app/app_state_scope.dart';
 
 import 'inventory_history_tab.dart';
-import 'bills_tab.dart';
+import 'stock_adjustment_tab.dart';
 import 'expenses_tab.dart';
 import 'overview_tab.dart';
 import 'purchase_orders_tab.dart';
 
-import '../services/bills_service.dart';
 import '../services/expenses_service.dart';
 import '../services/purchase_orders_service.dart';
 import '../widgets/add_expense_dialog.dart';
 import '../widgets/add_purchase_order_dialog.dart';
-import '../widgets/create_bill_dialog.dart';
 import '../widgets/post_dialog.dart';
 import '../widgets/app_logo.dart';
 
@@ -33,7 +31,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       GlobalKey<PurchaseOrdersTabState>();
   final GlobalKey<ExpensesTabState> _expensesTabKey =
       GlobalKey<ExpensesTabState>();
-  final GlobalKey<BillsTabState> _billsTabKey = GlobalKey<BillsTabState>();
 
   @override
   void initState() {
@@ -52,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       _HomeTab(
         title: 'Stock Adjustment',
         icon: Icons.tune_outlined,
-        builder: (_, __) => BillsTab(key: _billsTabKey),
+        builder: (_, __) => const StockAdjustmentTab(),
       ),
       _HomeTab(
         title: 'Inventory History',
@@ -130,17 +127,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         }
         break;
       case 2:
-        final createdBill = await showDialog<Bill>(
+        await showDialog<void>(
           context: context,
-          builder: (context) => const CreateBillDialog(),
+          builder: (context) => const PostDialog(
+            title: 'Create Stock Adjustment',
+            apiPath: 'https://crm.kokonuts.my',
+            description:
+                'Add the correct endpoint and payload for stock adjustments when ready.',
+            samplePayload: {
+              'example': 'value',
+            },
+          ),
         );
-
-        if (createdBill != null && mounted) {
-          _billsTabKey.currentState?.insertCreatedBill(createdBill);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Bill created successfully.')),
-          );
-        }
         break;
       default:
         await showDialog<void>(
