@@ -29,6 +29,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   final _stocktakeService = StocktakeService();
 
   final _timeController = TextEditingController();
+  final _currentQuantityController = TextEditingController();
   final _updatedQuantityController = TextEditingController();
 
   Timer? _timer;
@@ -64,6 +65,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   void dispose() {
     _timer?.cancel();
     _timeController.dispose();
+    _currentQuantityController.dispose();
     _updatedQuantityController.dispose();
     super.dispose();
   }
@@ -483,6 +485,17 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     );
 
     final currentQuantity = selectedLot.inventoryNumber;
+    if (_currentQuantityController.text != currentQuantity) {
+      _currentQuantityController.text = currentQuantity;
+    }
+
+    final adjustedItemIds = _lineItems
+        .map((item) => item.itemId)
+        .whereType<String>()
+        .toSet();
+    final availableItems = _items
+        .where((item) => !adjustedItemIds.contains(item.id))
+        .toList();
 
     final canAdd = _selectedItemId != null &&
         _selectedLotNumber != null &&
@@ -507,7 +520,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                 filled: !canSelectItem,
                 fillColor: readOnlyFillColor,
               ),
-              items: _items
+              items: availableItems
                   .map(
                     (item) => DropdownMenuItem(
                       value: item.id,
@@ -539,7 +552,20 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                         )
                         .toList(),
                     onChanged: hasSelectedItem
-                        ? (value) => setState(() => _selectedLotNumber = value)
+                        ? (value) {
+                            setState(() {
+                              _selectedLotNumber = value;
+                              final selected = _lots.firstWhere(
+                                (lot) => lot.lotNumber == value,
+                                orElse: () => const StocktakeLotOption(
+                                  lotNumber: '',
+                                  inventoryNumber: '',
+                                ),
+                              );
+                              _currentQuantityController.text =
+                                  selected.inventoryNumber;
+                            });
+                          }
                         : null,
                   ),
                 ),
@@ -549,7 +575,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                   child: TextFormField(
                     readOnly: true,
                     enabled: hasSelectedItem,
-                    initialValue: currentQuantity,
+                    controller: _currentQuantityController,
                     decoration: InputDecoration(
                       labelText: 'Current Quantity',
                       filled: true,
@@ -586,6 +612,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     _selectedItemId = null;
     _selectedLotNumber = null;
     _lots = const [];
+    _currentQuantityController.clear();
     _updatedQuantityController.clear();
   }
 
@@ -594,6 +621,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       _selectedItemId = itemId;
       _selectedLotNumber = null;
       _lots = const [];
+      _currentQuantityController.clear();
     });
 
     if (itemId == null ||
