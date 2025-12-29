@@ -164,6 +164,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         _readString(detail, const ['type', 'adjustment_type', 'loss_type']);
     final warehouseId = _readString(detail, const ['warehouse_id', 'warehouseId']);
     final warehousesId = _readWarehouseId(detail['warehouses']);
+    final warehousesName = _readWarehouseName(detail['warehouses']);
     final warehouseName = _readString(detail, const ['warehouse_name', 'warehouseName']);
 
     final nestedWarehouse = detail['warehouse'];
@@ -176,7 +177,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
 
     final resolvedWarehouseId = _resolveWarehouseSelection(
       warehouseId: warehouseId ?? warehousesId ?? nestedWarehouseId,
-      warehouseName: warehouseName ?? nestedWarehouseName,
+      warehouseName: warehouseName ?? warehousesName ?? nestedWarehouseName,
     );
 
     setState(() {
@@ -350,23 +351,35 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   }
 
   Widget _buildTypeDropdown() {
+    final isReadOnly = _isResumeMode;
+    final theme = Theme.of(context);
+    final readOnlyFillColor = theme.colorScheme.surfaceVariant.withOpacity(0.4);
     return DropdownButtonFormField<String>(
       value: _selectedType,
       items: const [
         DropdownMenuItem(value: 'loss', child: Text('Loss')),
         DropdownMenuItem(value: 'adjustment', child: Text('Adjustment Increase')),
       ],
-      onChanged: (value) {
-        setState(() {
-          _selectedType = value;
-          _resetSelectedItem();
-        });
-      },
-      decoration: const InputDecoration(labelText: 'Type'),
+      onChanged: isReadOnly
+          ? null
+          : (value) {
+              setState(() {
+                _selectedType = value;
+                _resetSelectedItem();
+              });
+            },
+      decoration: InputDecoration(
+        labelText: 'Type',
+        filled: isReadOnly,
+        fillColor: readOnlyFillColor,
+      ),
     );
   }
 
   Widget _buildWarehouseDropdown() {
+    final isReadOnly = _isResumeMode;
+    final theme = Theme.of(context);
+    final readOnlyFillColor = theme.colorScheme.surfaceVariant.withOpacity(0.4);
     return DropdownButtonFormField<String>(
       value: _selectedWarehouseId,
       items: _warehouses
@@ -377,13 +390,19 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
             ),
           )
           .toList(),
-      onChanged: (value) {
-        setState(() {
-          _selectedWarehouseId = value;
-          _resetSelectedItem();
-        });
-      },
-      decoration: const InputDecoration(labelText: 'Warehouse'),
+      onChanged: isReadOnly
+          ? null
+          : (value) {
+              setState(() {
+                _selectedWarehouseId = value;
+                _resetSelectedItem();
+              });
+            },
+      decoration: InputDecoration(
+        labelText: 'Warehouse',
+        filled: isReadOnly,
+        fillColor: readOnlyFillColor,
+      ),
     );
   }
 
@@ -985,6 +1004,24 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       return _readString(value, const ['warehouse_id', 'id']);
     }
     return null;
+  }
+
+  String? _readWarehouseName(dynamic value) {
+    if (value is String || value is num || value is bool) {
+      return value.toString();
+    }
+    if (value is List && value.isNotEmpty) {
+      return _readWarehouseName(value.first);
+    }
+    if (value is Map<String, dynamic>) {
+      return _readString(value, const ['warehouse_name', 'name', 'title']);
+    }
+    return null;
+  }
+
+  bool get _isResumeMode {
+    final adjustmentId = widget.adjustmentId?.trim();
+    return adjustmentId != null && adjustmentId.isNotEmpty;
   }
 }
 
