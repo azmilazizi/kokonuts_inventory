@@ -376,8 +376,8 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
 
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minWidth: tableWidth),
+          child: SizedBox(
+            width: tableWidth,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
