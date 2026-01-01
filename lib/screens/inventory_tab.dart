@@ -5,6 +5,8 @@ import '../services/inventory_manage_service.dart';
 
 enum InventoryStockFilter { inStock, lowStock, outOfStock }
 
+enum InventorySortOption { name, sku, unit, quantity }
+
 class InventoryTab extends StatefulWidget {
   const InventoryTab({super.key});
 
@@ -23,6 +25,7 @@ class _InventoryTabState extends State<InventoryTab>
   final Set<String> _selectedWarehouseIds = {};
   final Set<InventoryStockFilter> _selectedStockFilters = {};
   final Set<String> _selectedGroupIds = {};
+  InventorySortOption _selectedSortOption = InventorySortOption.name;
   final _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -155,6 +158,15 @@ class _InventoryTabState extends State<InventoryTab>
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
                   ),
                   filled: true,
                   fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.4),
@@ -229,7 +241,7 @@ class _InventoryTabState extends State<InventoryTab>
   }
 
   List<InventoryManageItem> _filteredItems() {
-    return _items.where((item) {
+    final filtered = _items.where((item) {
       final qty = _calculateQuantity(item);
       final minValue = item.inventoryNumberMin ?? 0;
 
@@ -256,6 +268,33 @@ class _InventoryTabState extends State<InventoryTab>
 
       return true;
     }).toList();
+
+    final unitsById = {
+      for (final unit in _units) unit.id: unit.label.toLowerCase(),
+    };
+
+    switch (_selectedSortOption) {
+      case InventorySortOption.name:
+        filtered.sort(
+          (a, b) => a.skuName.toLowerCase().compareTo(b.skuName.toLowerCase()),
+        );
+      case InventorySortOption.sku:
+        filtered.sort(
+          (a, b) => a.skuCode.toLowerCase().compareTo(b.skuCode.toLowerCase()),
+        );
+      case InventorySortOption.unit:
+        filtered.sort((a, b) {
+          final unitA = unitsById[a.unitId] ?? '';
+          final unitB = unitsById[b.unitId] ?? '';
+          return unitA.compareTo(unitB);
+        });
+      case InventorySortOption.quantity:
+        filtered.sort(
+          (a, b) => _calculateQuantity(a).compareTo(_calculateQuantity(b)),
+        );
+    }
+
+    return filtered;
   }
 
   bool _matchesStockFilter(
@@ -312,6 +351,12 @@ class _InventoryTabState extends State<InventoryTab>
     });
   }
 
+  void _handleSortSelection(InventorySortOption selectedOption) {
+    setState(() {
+      _selectedSortOption = selectedOption;
+    });
+  }
+
   void _handleSearchChanged() {
     final value = _searchController.text.trim().toLowerCase();
     if (value == _searchQuery) {
@@ -339,12 +384,46 @@ class _InventoryTabState extends State<InventoryTab>
     return options;
   }
 
+  String _sortOptionLabel(InventorySortOption option) {
+    switch (option) {
+      case InventorySortOption.name:
+        return 'Name';
+      case InventorySortOption.sku:
+        return 'SKU';
+      case InventorySortOption.unit:
+        return 'Unit';
+      case InventorySortOption.quantity:
+        return 'Quantity';
+    }
+  }
+
   Future<void> _openFilterSheet(
     BuildContext context, {
     required List<_MultiSelectOption<String>> groupOptions,
   }) async {
     final isCompact = MediaQuery.sizeOf(context).width < 600;
     final fieldSpacing = isCompact ? 12.0 : 16.0;
+
+    final sortField = DropdownButtonFormField<InventorySortOption>(
+      value: _selectedSortOption,
+      decoration: InputDecoration(
+        labelText: 'Sort by',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      items: InventorySortOption.values
+          .map(
+            (option) => DropdownMenuItem(
+              value: option,
+              child: Text(_sortOptionLabel(option)),
+            ),
+          )
+          .toList(),
+      onChanged: (value) {
+        if (value != null) {
+          _handleSortSelection(value);
+        }
+      },
+    );
 
     await showModalBottomSheet<void>(
       context: context,
@@ -405,6 +484,8 @@ class _InventoryTabState extends State<InventoryTab>
                         emptyLabel: 'All groups',
                         onChanged: _handleGroupSelection,
                       ),
+                      SizedBox(height: fieldSpacing),
+                      sortField,
                     ],
                   )
                 else
@@ -462,6 +543,7 @@ class _InventoryTabState extends State<InventoryTab>
                           onChanged: _handleGroupSelection,
                         ),
                       ),
+                      SizedBox(width: 200, child: sortField),
                     ],
                   ),
                 const SizedBox(height: 16),
@@ -683,11 +765,12 @@ class _InventoryItemCard extends StatelessWidget {
       child: ExpansionTile(
         controlAffinity: ListTileControlAffinity.leading,
         title: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
                     children: [
@@ -768,7 +851,7 @@ class _InventoryItemCard extends StatelessWidget {
 
   Color _quantityColor(ThemeData theme, double value, double minValue) {
     if (value == 0) {
-      return theme.colorScheme.error;
+      return Colors.red.shade600;
     }
     if (value <= minValue) {
       return Colors.amber.shade700;
