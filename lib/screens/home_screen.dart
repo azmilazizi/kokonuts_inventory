@@ -7,7 +7,6 @@ import '../app/app_state_scope.dart';
 import 'inventory_history_tab.dart';
 import 'stock_adjustment_tab.dart';
 import 'inventory_tab.dart';
-import 'overview_tab.dart';
 import 'purchase_orders_tab.dart';
 
 import '../services/purchase_orders_service.dart';
@@ -54,11 +53,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         title: 'Inventory History',
         icon: Icons.history_outlined,
         builder: (_, __) => const InventoryHistoryTab(),
-      ),
-      _HomeTab(
-        title: 'Overview',
-        icon: Icons.dashboard_outlined,
-        builder: (_, appState) => OverviewTab(appState: appState),
       ),
     ];
     _controller = TabController(
@@ -147,7 +141,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
     final AppState scopedAppState = AppStateScope.of(context);
 
-    final bool isOverviewTabSelected = _controller.index == _tabs.length - 1;
     final _HomeTab currentTab = _tabs[_controller.index];
     final isCompact = MediaQuery.sizeOf(context).width < 600;
 
@@ -233,7 +226,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 .toList(growable: false),
           ),
         ),
-        floatingActionButton: isOverviewTabSelected || _controller.index == 1
+        floatingActionButton: _controller.index == 1
             ? null
             : FloatingActionButton(
                 tooltip: 'Add ${currentTab.title}',
