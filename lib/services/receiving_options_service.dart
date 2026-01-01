@@ -35,6 +35,8 @@ class ReceivingOptionsService {
     return ReceivingOptions(
       lotNumberPrefix: _extractLotNumberPrefix(decoded),
       nextLotNumber: _extractNextLotNumber(decoded),
+      inventoryReceivedNumberPrefix: _extractInventoryReceivedPrefix(decoded),
+      nextInventoryReceivedNumber: _extractNextInventoryReceivedNumber(decoded),
     );
   }
 
@@ -102,6 +104,73 @@ class ReceivingOptionsService {
     return null;
   }
 
+  String? _extractInventoryReceivedPrefix(dynamic source) {
+    if (source is Map<String, dynamic>) {
+      if (source['name'] == 'inventory_received_number_prefix' &&
+          source.containsKey('value')) {
+        return _asString(source['value']);
+      }
+
+      for (final entry in source.entries) {
+        final key = entry.key.toLowerCase();
+        if (key == 'inventory_received_number_prefix' ||
+            key == 'inventoryreceivednumberprefix' ||
+            key == 'inventory_received_prefix' ||
+            key == 'inventoryreceivedprefix') {
+          return _asString(entry.value);
+        }
+      }
+      for (final value in source.values) {
+        final result = _extractInventoryReceivedPrefix(value);
+        if (result != null) {
+          return result;
+        }
+      }
+    } else if (source is List) {
+      for (final item in source) {
+        final result = _extractInventoryReceivedPrefix(item);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    return null;
+  }
+
+  int? _extractNextInventoryReceivedNumber(dynamic source) {
+    if (source is Map<String, dynamic>) {
+      if ((source['name'] == 'next_inventory_received_number' ||
+              source['name'] == 'next_inventory_received_mumber') &&
+          source.containsKey('value')) {
+        return _asInt(source['value']);
+      }
+
+      for (final entry in source.entries) {
+        final key = entry.key.toLowerCase();
+        if (key == 'next_inventory_received_number' ||
+            key == 'next_inventory_received_mumber' ||
+            key == 'nextinventoryreceivednumber' ||
+            key == 'next_inventory_received') {
+          return _asInt(entry.value);
+        }
+      }
+      for (final value in source.values) {
+        final result = _extractNextInventoryReceivedNumber(value);
+        if (result != null) {
+          return result;
+        }
+      }
+    } else if (source is List) {
+      for (final item in source) {
+        final result = _extractNextInventoryReceivedNumber(item);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+    return null;
+  }
+
   int? _asInt(dynamic value) {
     if (value is int) {
       return value;
@@ -127,10 +196,14 @@ class ReceivingOptions {
   const ReceivingOptions({
     required this.lotNumberPrefix,
     required this.nextLotNumber,
+    required this.inventoryReceivedNumberPrefix,
+    required this.nextInventoryReceivedNumber,
   });
 
   final String? lotNumberPrefix;
   final int? nextLotNumber;
+  final String? inventoryReceivedNumberPrefix;
+  final int? nextInventoryReceivedNumber;
 }
 
 class ReceivingOptionsException implements Exception {

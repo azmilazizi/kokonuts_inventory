@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../app/app_state_scope.dart';
+import '../services/inventory_receiving_service.dart';
 import '../services/purchase_order_receiving_service.dart';
 import '../services/receiving_options_service.dart';
 import '../services/stocktake_service.dart';
@@ -22,17 +23,20 @@ class _InventoryReceivingVoucherDialogState
   final _purchaseOrderService = PurchaseOrderReceivingService();
   final _warehouseService = StocktakeService();
   final _optionsService = ReceivingOptionsService();
+  final _receivingService = InventoryReceivingService();
   final _unitService = WarehouseUnitService();
 
   Future<_ReceivingDialogData>? _future;
   bool _initialized = false;
   bool _formsInitialized = false;
+  bool _isSubmitting = false;
   DateTime _selectedDate = DateTime.now();
   final TextEditingController _dateController = TextEditingController();
   List<_ReceivingItemForm> _itemForms = [];
   List<WarehouseOption> _warehouses = [];
   Map<String, String> _unitLabels = {};
   ReceivingOptions? _options;
+  PurchaseOrderReceivingDetail? _detail;
 
   @override
   void didChangeDependencies() {
@@ -163,6 +167,7 @@ class _InventoryReceivingVoucherDialogState
     _warehouses = data.warehouses;
     _options = data.options;
     _unitLabels = data.unitLabels;
+    _detail = data.detail;
     _itemForms = data.detail.items.asMap().entries.map((entry) {
       final index = entry.key;
       final item = entry.value;
@@ -234,11 +239,132 @@ class _InventoryReceivingVoucherDialogState
     });
   }
 
-  void _submit() {
+  Future<void> _submit() async {
+    if (_isSubmitting) {
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    final headers = await _buildAuthHeaders();
+    if (!mounted) {
+      return;
+    }
+
+    if (headers == null) {
+      _showError('You are not logged in.');
+      return;
+    }
+
+    final detail = _detail;
+    if (detail == null) {
+      _showError('Purchase order details are unavailable.');
+      return;
+    }
+
+    final appState = AppStateScope.of(context);
+    final totalValue = _resolveOrderTotal(detail);
+    final goodsReceiptCode = _buildGoodsReceiptCode();
+
+    final goodsReceiptDetails = _itemForms.map((form) {
+      final quantity =
+          _parseNumber(form.quantityController.text) ?? form.item.quantity;
+      final unitPrice =
+          _parseNumber(form.unitPriceLabel) ?? form.item.unitPrice ?? 0;
+      final amount = _parseNumber(form.totalLabel) ?? quantity * unitPrice;
+      return {
+        'commodity_code': form.item.code ?? '',
+        'commodity_name': form.item.name,
+        'warehouse_id': form.selectedWarehouseId ?? '0',
+        'unit_id': form.item.unitId ?? '',
+        'quantities': quantity,
+        'unit_price': unitPrice,
+        'tax_money': 0,
+        'goods_money': amount,
+        'lot_number': form.lotNumberController.text.trim(),
+        'sub_total': amount,
+      };
+    }).toList(growable: false);
+
+    final payload = {
+      'supplier_code': detail.vendor?.code ?? '',
+      'supplier_name': detail.vendor?.name ?? '',
+      'buyer_id': detail.buyerId ?? '',
+      'pr_order_id': detail.id,
+      'date_c': _dateController.text.trim(),
+      'goods_receipt_code': goodsReceiptCode,
+      'warehouse_id': '0',
+      'total_tax_money': 0,
+      'total_goods_money': totalValue,
+      'value_of_inventory': totalValue,
+      'total_money': totalValue,
+      'addedfrom': appState.currentUserId ?? '',
+      'approval': 1,
+      'goods_receipt_details': goodsReceiptDetails,
+    };
+
+    try {
+      await _receivingService.createGoodsReceipt(
+        headers: headers,
+        payload: payload,
+      );
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Receiving voucher submitted.')),
+      );
+      Navigator.of(context).pop();
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      _showError(error.toString());
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Receiving voucher submitted.')),
+      SnackBar(content: Text(message)),
     );
-    Navigator.of(context).pop();
+    setState(() {
+      _isSubmitting = false;
+    });
+  }
+
+  String _buildGoodsReceiptCode() {
+    final options = _options;
+    final prefix = options?.inventoryReceivedNumberPrefix?.trim() ?? '';
+    final nextNumber = options?.nextInventoryReceivedNumber;
+    if (nextNumber == null) {
+      return prefix;
+    }
+    return '$prefix$nextNumber';
+  }
+
+  double _resolveOrderTotal(PurchaseOrderReceivingDetail detail) {
+    final total = detail.total;
+    if (total != null) {
+      return total;
+    }
+
+    var sum = 0.0;
+    for (final item in detail.items) {
+      if (item.total != null) {
+        sum += item.total!;
+      } else if (item.unitPrice != null) {
+        sum += item.unitPrice! * item.quantity;
+      }
+    }
+    return sum;
   }
 
   @override
@@ -346,7 +472,7 @@ class _InventoryReceivingVoucherDialogState
                   Align(
                     alignment: Alignment.centerRight,
                     child: ElevatedButton(
-                      onPressed: _submit,
+                      onPressed: _isSubmitting ? null : _submit,
                       child: const Text('Submit'),
                     ),
                   ),
@@ -643,4 +769,12 @@ String _formatDate(DateTime value) {
   final month = value.month.toString().padLeft(2, '0');
   final year = value.year.toString().padLeft(4, '0');
   return '$day-$month-$year';
+}
+
+double? _parseNumber(String value) {
+  final normalized = value.trim();
+  if (normalized.isEmpty) {
+    return null;
+  }
+  return double.tryParse(normalized.replaceAll(',', ''));
 }
