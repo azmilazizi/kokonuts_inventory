@@ -306,7 +306,7 @@ class _InventoryReceivingVoucherDialogState
         'commodity_name': form.item.name,
         'warehouse_id': form.selectedWarehouseId ?? '0',
         'unit_id': form.item.unitId ?? '',
-        'quantities': quantity,
+        'quantity': quantity,
         'unit_price': unitPrice,
         'tax_money': 0,
         'goods_money': amount,
