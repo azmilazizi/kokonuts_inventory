@@ -239,8 +239,35 @@ class _InventoryReceivingVoucherDialogState
     });
   }
 
+  bool _validateItems() {
+    var isValid = true;
+    for (final form in _itemForms) {
+      if (form.selectedWarehouseId == null ||
+          form.selectedWarehouseId!.trim().isEmpty) {
+        form.warehouseError = 'Warehouse is required.';
+        isValid = false;
+      } else {
+        form.warehouseError = null;
+      }
+      final quantity = _parseNumber(form.quantityController.text);
+      if (quantity == null || quantity <= 0) {
+        form.quantityError = 'Quantity is required.';
+        isValid = false;
+      } else {
+        form.quantityError = null;
+      }
+    }
+    return isValid;
+  }
+
   Future<void> _submit() async {
     if (_isSubmitting) {
+      return;
+    }
+
+    if (!_validateItems()) {
+      setState(() {});
+      _showError('Please fill in all required fields.');
       return;
     }
 
@@ -458,10 +485,13 @@ class _InventoryReceivingVoucherDialogState
                             onWarehouseChanged: (value) {
                               setState(() {
                                 form.selectedWarehouseId = value;
+                                form.warehouseError = null;
                               });
                             },
-                            onLotNumberChanged: () {
-                              form.autoLotNumber = false;
+                            onQuantityChanged: () {
+                              setState(() {
+                                form.quantityError = null;
+                              });
                             },
                           );
                         },
@@ -491,13 +521,13 @@ class _ReceivingItemCard extends StatelessWidget {
     required this.form,
     required this.warehouses,
     required this.onWarehouseChanged,
-    required this.onLotNumberChanged,
+    required this.onQuantityChanged,
   });
 
   final _ReceivingItemForm form;
   final List<WarehouseOption> warehouses;
   final ValueChanged<String?> onWarehouseChanged;
-  final VoidCallback onLotNumberChanged;
+  final VoidCallback onQuantityChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -532,9 +562,10 @@ class _ReceivingItemCard extends StatelessWidget {
                 ),
                 DropdownButtonFormField<String>(
                   value: form.selectedWarehouseId,
-                  decoration: const InputDecoration(
-                    labelText: 'Warehouse',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: 'Warehouse *',
+                    border: const OutlineInputBorder(),
+                    errorText: form.warehouseError,
                   ),
                   items: warehouses
                       .map(
@@ -549,9 +580,10 @@ class _ReceivingItemCard extends StatelessWidget {
                 TextFormField(
                   controller: form.quantityController,
                   decoration: InputDecoration(
-                    labelText: 'Quantity',
+                    labelText: 'Quantity *',
                     suffixText: form.unitLabel.isNotEmpty ? form.unitLabel : null,
                     border: const OutlineInputBorder(),
+                    errorText: form.quantityError,
                   ),
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
@@ -560,6 +592,7 @@ class _ReceivingItemCard extends StatelessWidget {
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
                   ],
+                  onChanged: (_) => onQuantityChanged(),
                 ),
                 TextFormField(
                   initialValue: form.unitPriceLabel,
@@ -571,11 +604,11 @@ class _ReceivingItemCard extends StatelessWidget {
                 ),
                 TextFormField(
                   controller: form.lotNumberController,
+                  readOnly: true,
                   decoration: const InputDecoration(
                     labelText: 'Lot Number',
                     border: OutlineInputBorder(),
                   ),
-                  onChanged: (_) => onLotNumberChanged(),
                 ),
                 _AmountField(value: form.totalLabel),
               ];
@@ -670,6 +703,8 @@ class _ReceivingItemForm {
     required this.unitLabel,
     required this.autoLotNumber,
     this.selectedWarehouseId,
+    this.warehouseError,
+    this.quantityError,
   });
 
   final PurchaseOrderReceivingItem item;
@@ -680,6 +715,8 @@ class _ReceivingItemForm {
   final String unitLabel;
   bool autoLotNumber;
   String? selectedWarehouseId;
+  String? warehouseError;
+  String? quantityError;
 
   void dispose() {
     quantityController.dispose();
