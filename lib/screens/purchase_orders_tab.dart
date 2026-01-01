@@ -265,6 +265,7 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
                                 theme: theme,
                                 showTopBorder: index == 0,
                                 isCompactLayout: isCompactLayout,
+                                onVoucherSubmitted: _refreshPendingReceives,
                               );
                             }, childCount: _orders.length),
                           ),
@@ -341,6 +342,10 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
         context,
       ).showSnackBar(SnackBar(content: Text(successMessage)));
     }
+  }
+
+  Future<void> _refreshPendingReceives() async {
+    await _fetchPage(reset: true);
   }
 
   void _applySorting() {
@@ -697,12 +702,14 @@ class _PurchaseOrderRow extends StatefulWidget {
     required this.theme,
     required this.showTopBorder,
     required this.isCompactLayout,
+    this.onVoucherSubmitted,
   });
 
   final PurchaseOrder order;
   final ThemeData theme;
   final bool showTopBorder;
   final bool isCompactLayout;
+  final Future<void> Function()? onVoucherSubmitted;
 
   @override
   State<_PurchaseOrderRow> createState() => _PurchaseOrderRowState();
@@ -786,13 +793,16 @@ class _PurchaseOrderRowState extends State<_PurchaseOrderRow> {
     );
   }
 
-  void _showReceivingVoucher(BuildContext context) {
-    showDialog<void>(
+  Future<void> _showReceivingVoucher(BuildContext context) async {
+    final didSubmit = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (context) =>
           InventoryReceivingVoucherDialog(orderId: widget.order.id),
     );
+    if (didSubmit == true) {
+      await widget.onVoucherSubmitted?.call();
+    }
   }
 }
 
