@@ -6,13 +6,11 @@ import '../app/app_state_scope.dart';
 
 import 'inventory_history_tab.dart';
 import 'stock_adjustment_tab.dart';
-import 'expenses_tab.dart';
+import 'inventory_tab.dart';
 import 'overview_tab.dart';
 import 'purchase_orders_tab.dart';
 
-import '../services/expenses_service.dart';
 import '../services/purchase_orders_service.dart';
-import '../widgets/add_expense_dialog.dart';
 import '../widgets/add_purchase_order_dialog.dart';
 import '../widgets/post_dialog.dart';
 import '../widgets/stock_adjustment_dialog.dart';
@@ -30,8 +28,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   late final List<_HomeTab> _tabs;
   final GlobalKey<PurchaseOrdersTabState> _purchaseOrdersTabKey =
       GlobalKey<PurchaseOrdersTabState>();
-  final GlobalKey<ExpensesTabState> _expensesTabKey =
-      GlobalKey<ExpensesTabState>();
   final GlobalKey<StockAdjustmentTabState> _stockAdjustmentTabKey =
       GlobalKey<StockAdjustmentTabState>();
 
@@ -47,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       _HomeTab(
         title: 'Inventory',
         icon: Icons.inventory_2_outlined,
-        builder: (_, __) => ExpensesTab(key: _expensesTabKey),
+        builder: (_, __) => const InventoryTab(),
       ),
       _HomeTab(
         title: 'Stock Adjustment',
@@ -116,19 +112,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     }
 
     switch (_controller.index) {
-      case 1:
-        final createdExpense = await showDialog<Expense>(
-          context: context,
-          builder: (context) => const AddExpenseDialog(),
-        );
-
-        if (createdExpense != null && mounted) {
-          _expensesTabKey.currentState?.insertCreatedExpense(createdExpense);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Expense created successfully.')),
-          );
-        }
-        break;
       case 2:
         final didSave = await showDialog<bool>(
           context: context,
@@ -250,7 +233,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 .toList(growable: false),
           ),
         ),
-        floatingActionButton: isOverviewTabSelected
+        floatingActionButton: isOverviewTabSelected || _controller.index == 1
             ? null
             : FloatingActionButton(
                 tooltip: 'Add ${currentTab.title}',
