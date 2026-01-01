@@ -813,10 +813,9 @@ class _InventoryItemCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            _QuantityPill(
+            _QuantityText(
               value: _formatNumber(quantity),
-              backgroundColor: quantityColor,
-              textColor: _quantityTextColor(quantityColor),
+              textColor: quantityColor,
             ),
           ],
         ),
@@ -859,37 +858,25 @@ class _InventoryItemCard extends StatelessWidget {
     return Colors.green.shade600;
   }
 
-  Color _quantityTextColor(Color background) {
-    return background.computeLuminance() > 0.6 ? Colors.black : Colors.white;
-  }
 }
 
-class _QuantityPill extends StatelessWidget {
-  const _QuantityPill({
+class _QuantityText extends StatelessWidget {
+  const _QuantityText({
     required this.value,
-    required this.backgroundColor,
     required this.textColor,
   });
 
   final String value;
-  final Color backgroundColor;
   final Color textColor;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Text(
-        value,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              color: textColor,
-            ),
-      ),
+    return Text(
+      value,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: textColor,
+          ),
     );
   }
 }
