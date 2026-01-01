@@ -4,6 +4,7 @@ import '../app/app_state_scope.dart';
 import '../services/purchase_orders_service.dart';
 import '../widgets/alert_banner.dart';
 import '../widgets/date_range_filter_button.dart';
+import '../widgets/inventory_receiving_voucher_dialog.dart';
 import '../widgets/purchase_order_details_dialog.dart';
 import '../widgets/sortable_header_cell.dart';
 import '../widgets/table_filter_bar.dart';
@@ -43,7 +44,7 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
   // layouts and prevents them from collapsing into each other on small
   // screens. The wider width ensures horizontal scrolling kicks in before the
   // table gets cramped.
-  static const double _minTableWidth = 1100;
+  static const double _minTableWidth = 1240;
 
   bool _isLoading = false;
   bool _hasMore = true;
@@ -561,7 +562,7 @@ class _PurchaseOrdersHeader extends StatelessWidget {
   final bool sortAscending;
   final ValueChanged<PurchaseOrderSortColumn> onSort;
 
-  static const _columnFlex = [3, 4, 3, 3, 3, 3];
+  static const _columnFlex = [3, 4, 3, 3, 3, 3, 2];
 
   @override
   Widget build(BuildContext context) {
@@ -620,6 +621,12 @@ class _PurchaseOrdersHeader extends StatelessWidget {
           SortableHeaderCell(
             label: 'Delivery Status',
             flex: _columnFlex[5],
+            theme: theme,
+            textAlign: TextAlign.center,
+          ),
+          SortableHeaderCell(
+            label: 'Actions',
+            flex: _columnFlex[6],
             theme: theme,
             textAlign: TextAlign.center,
           ),
@@ -704,7 +711,7 @@ class _PurchaseOrderRow extends StatefulWidget {
 class _PurchaseOrderRowState extends State<_PurchaseOrderRow> {
   bool _hovering = false;
 
-  static const _columnFlex = [3, 4, 3, 3, 3, 3];
+  static const _columnFlex = [3, 4, 3, 3, 3, 3, 2];
 
   void _showDetails(BuildContext context) {
     showDialog(
@@ -768,10 +775,23 @@ class _PurchaseOrderRowState extends State<_PurchaseOrderRow> {
                 status: widget.order.deliveryStatus,
                 flex: _columnFlex[5],
               ),
+              _ActionCell(
+                flex: _columnFlex[6],
+                onMarkReceived: () => _showReceivingVoucher(context),
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  void _showReceivingVoucher(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) =>
+          InventoryReceivingVoucherDialog(orderId: widget.order.id),
     );
   }
 }
@@ -818,6 +838,27 @@ class _DataCell extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         maxLines: 1,
         style: style,
+      ),
+    );
+  }
+}
+
+class _ActionCell extends StatelessWidget {
+  const _ActionCell({required this.flex, required this.onMarkReceived});
+
+  final int flex;
+  final VoidCallback onMarkReceived;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      flex: flex,
+      child: Center(
+        child: IconButton(
+          tooltip: 'Mark as received',
+          icon: const Icon(Icons.check_circle_outline),
+          onPressed: onMarkReceived,
+        ),
       ),
     );
   }
