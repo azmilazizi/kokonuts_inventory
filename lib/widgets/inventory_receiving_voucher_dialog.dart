@@ -343,7 +343,7 @@ class _InventoryReceivingVoucherDialogState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Receiving voucher submitted.')),
       );
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
     } catch (error) {
       if (!mounted) {
         return;
