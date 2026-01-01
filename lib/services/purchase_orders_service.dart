@@ -102,7 +102,14 @@ class PurchaseOrdersService {
     String? fromDate,
     String? toDate,
   }) async {
-    final params = {'page': '$page', 'per_page': '$perPage'};
+    final params = <String, String>{
+      'page': '$page',
+      'per_page': '$perPage',
+      'or[0][status]': '0',
+      'or[1][delivery_status]': '0',
+      'or[2][status_goods]': '0',
+      'or[3][delivery_date]': 'null',
+    };
     if (fromDate != null) params['from'] = fromDate;
     if (toDate != null) params['to'] = toDate;
 
@@ -1016,4 +1023,3 @@ double? _parseDouble(dynamic value) {
   }
   return null;
 }
-
