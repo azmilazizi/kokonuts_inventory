@@ -11,6 +11,10 @@ class InventoryManageService {
       Uri.parse('https://crm.kokonuts.my/warehouse/api/v1/warehouses');
   static final Uri _inventoryUri =
       Uri.parse('https://crm.kokonuts.my/warehouse/api/v1/inventory_manages');
+  static final Uri _unitsUri =
+      Uri.parse('https://crm.kokonuts.my/warehouse/api/v1/units');
+  static final Uri _itemGroupsUri =
+      Uri.parse('https://crm.kokonuts.my/warehouse/api/v1/item_groups');
 
   Future<List<InventoryWarehouseOption>> fetchWarehouses({
     required Map<String, String> headers,
@@ -78,6 +82,76 @@ class InventoryManageService {
     return items;
   }
 
+  Future<List<InventoryUnitOption>> fetchUnits({
+    required Map<String, String> headers,
+  }) async {
+    http.Response response;
+    try {
+      response = await _client.get(_unitsUri, headers: headers);
+    } catch (error) {
+      throw InventoryManageException('Failed to reach server: $error');
+    }
+
+    if (response.statusCode != 200) {
+      throw InventoryManageException(
+        'Units request failed with status ${response.statusCode}: ${response.body}',
+      );
+    }
+
+    dynamic decoded;
+    try {
+      decoded = jsonDecode(response.body);
+    } catch (error) {
+      throw InventoryManageException('Unable to parse units response: $error');
+    }
+
+    final units = <InventoryUnitOption>[];
+    _collectUnits(decoded, units);
+    final unique = <String, InventoryUnitOption>{};
+    for (final unit in units) {
+      unique[unit.id] = unit;
+    }
+    final deduped = unique.values.toList()
+      ..sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+    return deduped;
+  }
+
+  Future<List<InventoryItemGroupOption>> fetchItemGroups({
+    required Map<String, String> headers,
+  }) async {
+    http.Response response;
+    try {
+      response = await _client.get(_itemGroupsUri, headers: headers);
+    } catch (error) {
+      throw InventoryManageException('Failed to reach server: $error');
+    }
+
+    if (response.statusCode != 200) {
+      throw InventoryManageException(
+        'Item groups request failed with status ${response.statusCode}: ${response.body}',
+      );
+    }
+
+    dynamic decoded;
+    try {
+      decoded = jsonDecode(response.body);
+    } catch (error) {
+      throw InventoryManageException(
+        'Unable to parse item groups response: $error',
+      );
+    }
+
+    final groups = <InventoryItemGroupOption>[];
+    _collectItemGroups(decoded, groups);
+    final unique = <String, InventoryItemGroupOption>{};
+    for (final group in groups) {
+      unique[group.id] = group;
+    }
+    final deduped = unique.values.toList()
+      ..sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+    return deduped;
+  }
+
   void _collectWarehouses(
     dynamic source,
     List<InventoryWarehouseOption> target,
@@ -115,6 +189,46 @@ class InventoryManageService {
     } else if (source is List) {
       for (final item in source) {
         _collectInventoryItems(item, target);
+      }
+    }
+  }
+
+  void _collectUnits(dynamic source, List<InventoryUnitOption> target) {
+    if (source is Map<String, dynamic>) {
+      final id = _readString(source, const ['unit_id', 'id']);
+      final label = _readString(
+        source,
+        const ['unit_name', 'name', 'title', 'label'],
+      );
+      if (id != null && label != null) {
+        target.add(InventoryUnitOption(id: id, label: label));
+      }
+      for (final value in source.values) {
+        _collectUnits(value, target);
+      }
+    } else if (source is List) {
+      for (final item in source) {
+        _collectUnits(item, target);
+      }
+    }
+  }
+
+  void _collectItemGroups(dynamic source, List<InventoryItemGroupOption> target) {
+    if (source is Map<String, dynamic>) {
+      final id = _readString(source, const ['group_id', 'id']);
+      final label = _readString(
+        source,
+        const ['label', 'group_name', 'name', 'title'],
+      );
+      if (id != null && label != null) {
+        target.add(InventoryItemGroupOption(id: id, label: label));
+      }
+      for (final value in source.values) {
+        _collectItemGroups(value, target);
+      }
+    } else if (source is List) {
+      for (final item in source) {
+        _collectItemGroups(item, target);
       }
     }
   }
@@ -159,6 +273,8 @@ class InventoryManageItem {
     required this.id,
     required this.skuCode,
     required this.skuName,
+    required this.groupId,
+    required this.unitId,
     required this.inventoryManage,
     required this.inventoryNumberMin,
     required this.inventoryNumberMax,
@@ -187,6 +303,8 @@ class InventoryManageItem {
       id: json['id']?.toString() ?? '',
       skuCode: json['sku_code']?.toString() ?? '',
       skuName: json['sku_name']?.toString() ?? '',
+      groupId: json['group_id']?.toString() ?? '',
+      unitId: json['unit_id']?.toString() ?? '',
       inventoryManage: manage,
       inventoryNumberMin: min,
       inventoryNumberMax: max,
@@ -196,6 +314,8 @@ class InventoryManageItem {
   final String id;
   final String skuCode;
   final String skuName;
+  final String groupId;
+  final String unitId;
   final List<InventoryManageLot> inventoryManage;
   final double? inventoryNumberMin;
   final double? inventoryNumberMax;
@@ -245,6 +365,20 @@ class InventoryManageLot {
     }
     return double.tryParse(value.toString());
   }
+}
+
+class InventoryUnitOption {
+  const InventoryUnitOption({required this.id, required this.label});
+
+  final String id;
+  final String label;
+}
+
+class InventoryItemGroupOption {
+  const InventoryItemGroupOption({required this.id, required this.label});
+
+  final String id;
+  final String label;
 }
 
 class InventoryManageException implements Exception {

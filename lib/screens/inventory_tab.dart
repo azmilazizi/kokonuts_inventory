@@ -18,8 +18,13 @@ class _InventoryTabState extends State<InventoryTab>
 
   List<InventoryWarehouseOption> _warehouses = const [];
   List<InventoryManageItem> _items = const [];
+  List<InventoryUnitOption> _units = const [];
+  List<InventoryItemGroupOption> _itemGroups = const [];
   final Set<String> _selectedWarehouseIds = {};
   final Set<InventoryStockFilter> _selectedStockFilters = {};
+  final Set<String> _selectedGroupIds = {};
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
 
   bool _isLoading = false;
   String? _error;
@@ -27,9 +32,18 @@ class _InventoryTabState extends State<InventoryTab>
   @override
   void initState() {
     super.initState();
+    _searchController.addListener(_handleSearchChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController
+      ..removeListener(_handleSearchChanged)
+      ..dispose();
+    super.dispose();
   }
 
   Future<void> _loadData() async {
@@ -80,6 +94,8 @@ class _InventoryTabState extends State<InventoryTab>
       final results = await Future.wait([
         _service.fetchWarehouses(headers: headers),
         _service.fetchInventoryItems(headers: headers),
+        _service.fetchUnits(headers: headers),
+        _service.fetchItemGroups(headers: headers),
       ]);
       if (!mounted) {
         return;
@@ -88,6 +104,8 @@ class _InventoryTabState extends State<InventoryTab>
       setState(() {
         _warehouses = results[0] as List<InventoryWarehouseOption>;
         _items = results[1] as List<InventoryManageItem>;
+        _units = results[2] as List<InventoryUnitOption>;
+        _itemGroups = results[3] as List<InventoryItemGroupOption>;
         _error = null;
       });
     } on InventoryManageException catch (error) {
@@ -118,18 +136,59 @@ class _InventoryTabState extends State<InventoryTab>
     super.build(context);
     final theme = Theme.of(context);
     final filteredItems = _filteredItems();
+    final groupOptions = _groupOptions();
+    final unitsById = {for (final unit in _units) unit.id: unit};
+    final groupsById = {for (final group in _itemGroups) group.id: group};
 
     return RefreshIndicator(
       onRefresh: _loadData,
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          _FilterSection(
-            warehouses: _warehouses,
-            selectedWarehouseIds: _selectedWarehouseIds,
-            selectedStockFilters: _selectedStockFilters,
-            onWarehouseChanged: _handleWarehouseSelection,
-            onStockFilterChanged: _handleStockFilterSelection,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isCompact = constraints.maxWidth < 600;
+              final searchField = TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search SKU code or name',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.4),
+                ),
+              );
+
+              final filterButton = OutlinedButton.icon(
+                onPressed: () => _openFilterSheet(
+                  context,
+                  groupOptions: groupOptions,
+                ),
+                icon: const Icon(Icons.filter_list),
+                label: const Text('Filters'),
+              );
+
+              if (isCompact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    searchField,
+                    const SizedBox(height: 12),
+                    filterButton,
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(child: searchField),
+                  const SizedBox(width: 12),
+                  filterButton,
+                ],
+              );
+            },
           ),
           const SizedBox(height: 16),
           if (_isLoading && _items.isEmpty)
@@ -154,6 +213,8 @@ class _InventoryTabState extends State<InventoryTab>
                 quantity: _calculateQuantity(item),
                 minValue: item.inventoryNumberMin ?? 0,
                 maxValue: item.inventoryNumberMax ?? 0,
+                unitLabel: unitsById[item.unitId]?.label ?? '—',
+                groupLabel: groupsById[item.groupId]?.label,
                 warehousesFilter: _selectedWarehouseIds,
               ),
             ),
@@ -168,16 +229,32 @@ class _InventoryTabState extends State<InventoryTab>
   }
 
   List<InventoryManageItem> _filteredItems() {
-    if (_selectedStockFilters.isEmpty) {
-      return _items;
-    }
-
     return _items.where((item) {
       final qty = _calculateQuantity(item);
       final minValue = item.inventoryNumberMin ?? 0;
-      return _selectedStockFilters.any(
-        (filter) => _matchesStockFilter(filter, qty, minValue),
-      );
+
+      if (_selectedStockFilters.isNotEmpty &&
+          !_selectedStockFilters.any(
+            (filter) => _matchesStockFilter(filter, qty, minValue),
+          )) {
+        return false;
+      }
+
+      if (_selectedGroupIds.isNotEmpty &&
+          !_selectedGroupIds.contains(item.groupId)) {
+        return false;
+      }
+
+      if (_searchQuery.isNotEmpty) {
+        final query = _searchQuery;
+        final code = item.skuCode.toLowerCase();
+        final name = item.skuName.toLowerCase();
+        if (!code.contains(query) && !name.contains(query)) {
+          return false;
+        }
+      }
+
+      return true;
     }).toList();
   }
 
@@ -227,80 +304,184 @@ class _InventoryTabState extends State<InventoryTab>
     });
   }
 
-  @override
-  bool get wantKeepAlive => true;
-}
+  void _handleGroupSelection(Set<String> selectedGroupIds) {
+    setState(() {
+      _selectedGroupIds
+        ..clear()
+        ..addAll(selectedGroupIds);
+    });
+  }
 
-class _FilterSection extends StatelessWidget {
-  const _FilterSection({
-    required this.warehouses,
-    required this.selectedWarehouseIds,
-    required this.selectedStockFilters,
-    required this.onWarehouseChanged,
-    required this.onStockFilterChanged,
-  });
+  void _handleSearchChanged() {
+    final value = _searchController.text.trim().toLowerCase();
+    if (value == _searchQuery) {
+      return;
+    }
+    setState(() {
+      _searchQuery = value;
+    });
+  }
 
-  final List<InventoryWarehouseOption> warehouses;
-  final Set<String> selectedWarehouseIds;
-  final Set<InventoryStockFilter> selectedStockFilters;
-  final ValueChanged<Set<String>> onWarehouseChanged;
-  final ValueChanged<Set<InventoryStockFilter>> onStockFilterChanged;
+  List<_MultiSelectOption<String>> _groupOptions() {
+    final presentGroups = _items
+        .map((item) => item.groupId)
+        .where((id) => id.trim().isNotEmpty)
+        .toSet();
+    final groupsById = {for (final group in _itemGroups) group.id: group};
+    final options = presentGroups
+        .map((id) => groupsById[id])
+        .whereType<InventoryItemGroupOption>()
+        .map(
+          (group) => _MultiSelectOption(value: group.id, label: group.label),
+        )
+        .toList()
+      ..sort((a, b) => a.label.toLowerCase().compareTo(b.label.toLowerCase()));
+    return options;
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  Future<void> _openFilterSheet(
+    BuildContext context, {
+    required List<_MultiSelectOption<String>> groupOptions,
+  }) async {
+    final isCompact = MediaQuery.sizeOf(context).width < 600;
+    final fieldSpacing = isCompact ? 12.0 : 16.0;
 
-    return Card(
-      elevation: 0,
-      color: theme.colorScheme.surfaceVariant.withOpacity(0.4),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Filters', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 12),
-            _MultiSelectField<String>(
-              label: 'Warehouses',
-              options: warehouses
-                  .map(
-                    (warehouse) => _MultiSelectOption(
-                      value: warehouse.id,
-                      label: warehouse.label,
-                    ),
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Filters', style: Theme.of(context).textTheme.titleMedium),
+                const SizedBox(height: 12),
+                if (isCompact)
+                  Column(
+                    children: [
+                      _MultiSelectField<String>(
+                        label: 'Warehouses',
+                        options: _warehouses
+                            .map(
+                              (warehouse) => _MultiSelectOption(
+                                value: warehouse.id,
+                                label: warehouse.label,
+                              ),
+                            )
+                            .toList(),
+                        selectedValues: _selectedWarehouseIds,
+                        emptyLabel: 'All warehouses',
+                        onChanged: _handleWarehouseSelection,
+                      ),
+                      SizedBox(height: fieldSpacing),
+                      _MultiSelectField<InventoryStockFilter>(
+                        label: 'Quantity status',
+                        options: const [
+                          _MultiSelectOption(
+                            value: InventoryStockFilter.inStock,
+                            label: 'In stock',
+                          ),
+                          _MultiSelectOption(
+                            value: InventoryStockFilter.lowStock,
+                            label: 'Low stock',
+                          ),
+                          _MultiSelectOption(
+                            value: InventoryStockFilter.outOfStock,
+                            label: 'Out of stock',
+                          ),
+                        ],
+                        selectedValues: _selectedStockFilters,
+                        emptyLabel: 'All statuses',
+                        onChanged: _handleStockFilterSelection,
+                      ),
+                      SizedBox(height: fieldSpacing),
+                      _MultiSelectField<String>(
+                        label: 'Item groups',
+                        options: groupOptions,
+                        selectedValues: _selectedGroupIds,
+                        emptyLabel: 'All groups',
+                        onChanged: _handleGroupSelection,
+                      ),
+                    ],
                   )
-                  .toList(),
-              selectedValues: selectedWarehouseIds,
-              emptyLabel: 'All warehouses',
-              onChanged: onWarehouseChanged,
-            ),
-            const SizedBox(height: 12),
-            _MultiSelectField<InventoryStockFilter>(
-              label: 'Quantity status',
-              options: const [
-                _MultiSelectOption(
-                  value: InventoryStockFilter.inStock,
-                  label: 'In stock',
-                ),
-                _MultiSelectOption(
-                  value: InventoryStockFilter.lowStock,
-                  label: 'Low stock',
-                ),
-                _MultiSelectOption(
-                  value: InventoryStockFilter.outOfStock,
-                  label: 'Out of stock',
+                else
+                  Wrap(
+                    spacing: fieldSpacing,
+                    runSpacing: fieldSpacing,
+                    children: [
+                      SizedBox(
+                        width: 280,
+                        child: _MultiSelectField<String>(
+                          label: 'Warehouses',
+                          options: _warehouses
+                              .map(
+                                (warehouse) => _MultiSelectOption(
+                                  value: warehouse.id,
+                                  label: warehouse.label,
+                                ),
+                              )
+                              .toList(),
+                          selectedValues: _selectedWarehouseIds,
+                          emptyLabel: 'All warehouses',
+                          onChanged: _handleWarehouseSelection,
+                        ),
+                      ),
+                      SizedBox(
+                        width: 240,
+                        child: _MultiSelectField<InventoryStockFilter>(
+                          label: 'Quantity status',
+                          options: const [
+                            _MultiSelectOption(
+                              value: InventoryStockFilter.inStock,
+                              label: 'In stock',
+                            ),
+                            _MultiSelectOption(
+                              value: InventoryStockFilter.lowStock,
+                              label: 'Low stock',
+                            ),
+                            _MultiSelectOption(
+                              value: InventoryStockFilter.outOfStock,
+                              label: 'Out of stock',
+                            ),
+                          ],
+                          selectedValues: _selectedStockFilters,
+                          emptyLabel: 'All statuses',
+                          onChanged: _handleStockFilterSelection,
+                        ),
+                      ),
+                      SizedBox(
+                        width: 240,
+                        child: _MultiSelectField<String>(
+                          label: 'Item groups',
+                          options: groupOptions,
+                          selectedValues: _selectedGroupIds,
+                          emptyLabel: 'All groups',
+                          onChanged: _handleGroupSelection,
+                        ),
+                      ),
+                    ],
+                  ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Done'),
+                  ),
                 ),
               ],
-              selectedValues: selectedStockFilters,
-              emptyLabel: 'All statuses',
-              onChanged: onStockFilterChanged,
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
+
+  @override
+  bool get wantKeepAlive => true;
 }
 
 class _MultiSelectField<T> extends StatelessWidget {
@@ -395,6 +576,12 @@ class _MultiSelectField<T> extends StatelessWidget {
                             return CheckboxListTile(
                               value: isSelected,
                               title: Text(option.label),
+                              contentPadding: const EdgeInsets.fromLTRB(
+                                16,
+                                8,
+                                16,
+                                8,
+                              ),
                               controlAffinity: ListTileControlAffinity.leading,
                               onChanged: (checked) {
                                 setState(() {
@@ -461,6 +648,8 @@ class _InventoryItemCard extends StatelessWidget {
     required this.quantity,
     required this.minValue,
     required this.maxValue,
+    required this.unitLabel,
+    required this.groupLabel,
     required this.warehousesFilter,
   });
 
@@ -468,6 +657,8 @@ class _InventoryItemCard extends StatelessWidget {
   final double quantity;
   final double minValue;
   final double maxValue;
+  final String unitLabel;
+  final String? groupLabel;
   final Set<String> warehousesFilter;
 
   @override
@@ -479,36 +670,72 @@ class _InventoryItemCard extends StatelessWidget {
             warehousesFilter.contains(entry.warehouseId))
         .toList();
 
+    final quantityColor = _quantityColor(theme, quantity, minValue);
+    final mutedStyle = theme.textTheme.bodyMedium?.copyWith(
+      color: theme.colorScheme.onSurface.withOpacity(0.6),
+      fontStyle: FontStyle.italic,
+    );
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ExpansionTile(
         controlAffinity: ListTileControlAffinity.leading,
-        title: Text(
-          'SKU Code: ${item.skuCode}',
-          style: theme.textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('SKU Name: ${item.skuCode}'),
-              const SizedBox(height: 4),
-              Wrap(
-                spacing: 12,
-                runSpacing: 6,
+        title: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _MetricChip(label: 'Quantity', value: _formatNumber(quantity)),
-                  _MetricChip(label: 'Minimum', value: _formatNumber(minValue)),
-                  _MetricChip(label: 'Maximum', value: _formatNumber(maxValue)),
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          item.skuCode,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: theme.colorScheme.primary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (groupLabel != null && groupLabel!.isNotEmpty) ...[
+                        const SizedBox(width: 8),
+                        _GroupChip(label: groupLabel!),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.skuName,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      Text('Min ${_formatNumber(minValue)}', style: mutedStyle),
+                      Text('•', style: mutedStyle),
+                      Text('Max ${_formatNumber(maxValue)}', style: mutedStyle),
+                      Text('•', style: mutedStyle),
+                      Text(unitLabel, style: mutedStyle),
+                    ],
+                  ),
                 ],
               ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 12),
+            _QuantityPill(
+              value: _formatNumber(quantity),
+              backgroundColor: quantityColor,
+              textColor: _quantityTextColor(quantityColor),
+            ),
+          ],
         ),
         children: [
           Padding(
@@ -520,6 +747,7 @@ class _InventoryItemCard extends StatelessWidget {
                   )
                 : Column(
                     children: [
+                      const SizedBox(height: 12),
                       const _LotHeaderRow(),
                       const Divider(height: 16),
                       ...lots.map((lot) => _LotRow(lot: lot)),
@@ -537,26 +765,71 @@ class _InventoryItemCard extends StatelessWidget {
     }
     return value.toStringAsFixed(2);
   }
+
+  Color _quantityColor(ThemeData theme, double value, double minValue) {
+    if (value == 0) {
+      return theme.colorScheme.error;
+    }
+    if (value <= minValue) {
+      return Colors.amber.shade700;
+    }
+    return Colors.green.shade600;
+  }
+
+  Color _quantityTextColor(Color background) {
+    return background.computeLuminance() > 0.6 ? Colors.black : Colors.white;
+  }
 }
 
-class _MetricChip extends StatelessWidget {
-  const _MetricChip({required this.label, required this.value});
+class _QuantityPill extends StatelessWidget {
+  const _QuantityPill({
+    required this.value,
+    required this.backgroundColor,
+    required this.textColor,
+  });
+
+  final String value;
+  final Color backgroundColor;
+  final Color textColor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Text(
+        value,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: textColor,
+            ),
+      ),
+    );
+  }
+}
+
+class _GroupChip extends StatelessWidget {
+  const _GroupChip({required this.label});
 
   final String label;
-  final String value;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceVariant.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
-        '$label: $value',
-        style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: theme.colorScheme.onSurface.withOpacity(0.7),
+        ),
       ),
     );
   }
