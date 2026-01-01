@@ -268,7 +268,7 @@ class _InventoryReceivingVoucherDialogState
     final totalValue = _resolveOrderTotal(detail);
     final goodsReceiptCode = _buildGoodsReceiptCode();
 
-    final goodsReceiptDetails = _itemForms.map((form) {
+    final goodsReceiptItems = _itemForms.map((form) {
       final quantity =
           _parseNumber(form.quantityController.text) ?? form.item.quantity;
       final unitPrice =
@@ -302,7 +302,7 @@ class _InventoryReceivingVoucherDialogState
       'total_money': totalValue,
       'addedfrom': appState.currentUserId ?? '',
       'approval': 1,
-      'goods_receipt_details': goodsReceiptDetails,
+      'items': goodsReceiptItems,
     };
 
     try {
