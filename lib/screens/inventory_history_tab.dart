@@ -33,7 +33,8 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
   final _displayEntries = <WarehouseHistoryEntry>[];
   final _filterController = TextEditingController();
 
-  InventoryHistorySortColumn _sortColumn = InventoryHistorySortColumn.voucherDate;
+  InventoryHistorySortColumn _sortColumn =
+      InventoryHistorySortColumn.voucherDate;
   bool _sortAscending = false;
   String _filterQuery = '';
 
@@ -103,15 +104,19 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
     }
 
     final rawToken = (appState.rawAuthToken ?? token).trim();
-    final sanitizedToken =
-        token.replaceFirst(RegExp('^Bearer\\s+', caseSensitive: false), '').trim();
-    final normalizedAuth =
-        sanitizedToken.isNotEmpty ? 'Bearer $sanitizedToken' : token.trim();
+    final sanitizedToken = token
+        .replaceFirst(RegExp('^Bearer\\s+', caseSensitive: false), '')
+        .trim();
+    final normalizedAuth = sanitizedToken.isNotEmpty
+        ? 'Bearer $sanitizedToken'
+        : token.trim();
     final autoTokenValue = rawToken
         .replaceFirst(RegExp('^Bearer\\s+', caseSensitive: false), '')
         .trim();
 
-    final authtokenHeader = autoTokenValue.isNotEmpty ? autoTokenValue : sanitizedToken;
+    final authtokenHeader = autoTokenValue.isNotEmpty
+        ? autoTokenValue
+        : sanitizedToken;
 
     final pageToLoad = reset ? 1 : _nextPage;
 
@@ -184,9 +189,12 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
       onRefresh: () => _fetchPage(reset: true),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final maxWidth =
-              constraints.maxWidth.isFinite ? constraints.maxWidth : _minTableWidth;
-          final tableWidth = maxWidth < _minTableWidth ? _minTableWidth : maxWidth;
+          final maxWidth = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : _minTableWidth;
+          final tableWidth = maxWidth < _minTableWidth
+              ? _minTableWidth
+              : maxWidth;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -227,21 +235,19 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
                             ),
                           ),
                           SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final entry = _displayEntries[index];
-                                return _InventoryHistoryRow(
-                                  entry: entry,
-                                  theme: theme,
-                                  showTopBorder: index == 0,
-                                );
-                              },
-                              childCount: _displayEntries.length,
-                            ),
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final entry = _displayEntries[index];
+                              return _InventoryHistoryRow(
+                                entry: entry,
+                                theme: theme,
+                                showTopBorder: index == 0,
+                              );
+                            }, childCount: _displayEntries.length),
                           ),
-                          SliverToBoxAdapter(
-                            child: _buildFooter(theme),
-                          ),
+                          SliverToBoxAdapter(child: _buildFooter(theme)),
                         ],
                       ),
                     ),
@@ -292,9 +298,7 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
 
     _displayEntries
       ..clear()
-      ..addAll(
-        ordered.where(_matchesFilter),
-      );
+      ..addAll(ordered.where(_matchesFilter));
   }
 
   bool _matchesFilter(WarehouseHistoryEntry entry) {
@@ -330,11 +334,13 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
       case InventoryHistorySortColumn.type:
         return a.type.toLowerCase().compareTo(b.type.toLowerCase());
       case InventoryHistorySortColumn.commodityName:
-        return a.commodityName.toLowerCase().compareTo(b.commodityName.toLowerCase());
+        return a.commodityName.toLowerCase().compareTo(
+          b.commodityName.toLowerCase(),
+        );
       case InventoryHistorySortColumn.warehouse:
         return a.warehouseDisplay.toLowerCase().compareTo(
-              b.warehouseDisplay.toLowerCase(),
-            );
+          b.warehouseDisplay.toLowerCase(),
+        );
       case InventoryHistorySortColumn.voucherDate:
         return _compareDates(a.voucherDate, b.voucherDate);
       case InventoryHistorySortColumn.openingStock:
@@ -388,8 +394,9 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
           children: [
             Text(
               _error!,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.colorScheme.error),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.error,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
@@ -407,8 +414,11 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
         padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
         child: Column(
           children: [
-            Icon(Icons.history_outlined,
-                size: 48, color: theme.colorScheme.primary),
+            Icon(
+              Icons.history_outlined,
+              size: 48,
+              color: theme.colorScheme.primary,
+            ),
             const SizedBox(height: 16),
             Text(
               'No inventory history available.',
@@ -463,17 +473,7 @@ class _InventoryHistoryHeader extends StatelessWidget {
   final bool sortAscending;
   final ValueChanged<InventoryHistorySortColumn> onSort;
 
-  static const _columnFlex = [
-    2,
-    2,
-    3,
-    3,
-    2,
-    2,
-    2,
-    2,
-    2,
-  ];
+  static const _columnFlex = [2, 2, 3, 3, 2, 2, 2, 2, 2];
 
   @override
   Widget build(BuildContext context) {
@@ -546,7 +546,8 @@ class _InventoryHistoryHeader extends StatelessWidget {
             flex: _columnFlex[7],
             theme: theme,
             textAlign: TextAlign.center,
-            isActive: sortColumn == InventoryHistorySortColumn.additionDeduction,
+            isActive:
+                sortColumn == InventoryHistorySortColumn.additionDeduction,
             ascending: sortAscending,
             onTap: () => onSort(InventoryHistorySortColumn.additionDeduction),
           ),
@@ -576,17 +577,7 @@ class _InventoryHistoryRow extends StatelessWidget {
   final ThemeData theme;
   final bool showTopBorder;
 
-  static const _columnFlex = [
-    2,
-    2,
-    3,
-    3,
-    2,
-    2,
-    2,
-    2,
-    2,
-  ];
+  static const _columnFlex = [2, 2, 3, 3, 2, 2, 2, 2, 2];
 
   @override
   Widget build(BuildContext context) {
@@ -615,7 +606,10 @@ class _InventoryHistoryRow extends StatelessWidget {
             alignment: Alignment.center,
           ),
           _DataCell(_displayValue(entry.commodityName), flex: _columnFlex[2]),
-          _DataCell(_displayValue(entry.warehouseDisplay), flex: _columnFlex[3]),
+          _DataCell(
+            _displayValue(entry.warehouseDisplay),
+            flex: _columnFlex[3],
+          ),
           _DataCell(
             _displayVoucherDate(entry.voucherDate),
             flex: _columnFlex[4],
@@ -724,11 +718,7 @@ class _InventoryHistoryHeaderDelegate extends SliverPersistentHeaderDelegate {
 }
 
 class _DataCell extends StatelessWidget {
-  const _DataCell(
-    this.value, {
-    required this.flex,
-    this.textAlign,
-  });
+  const _DataCell(this.value, {required this.flex, this.textAlign});
 
   final String value;
   final int flex;
@@ -838,10 +828,7 @@ class _TypePillCell extends StatelessWidget {
 }
 
 class _PillColors {
-  const _PillColors({
-    required this.background,
-    required this.foreground,
-  });
+  const _PillColors({required this.background, required this.foreground});
 
   final Color background;
   final Color foreground;
