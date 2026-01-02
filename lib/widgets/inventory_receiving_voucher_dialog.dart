@@ -316,7 +316,7 @@ class _InventoryReceivingVoucherDialogState
     }).toList(growable: false);
 
     final payload = {
-      'supplier_code': detail.vendor?.code ?? '',
+      'supplier_code': detail.vendor?.id ?? '',
       'supplier_name': detail.vendor?.name ?? '',
       'buyer_id': detail.buyerId ?? '',
       'pr_order_id': detail.id,

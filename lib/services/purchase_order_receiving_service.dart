@@ -185,8 +185,13 @@ class PurchaseOrderReceivingItem {
 }
 
 class PurchaseOrderVendor {
-  const PurchaseOrderVendor({required this.code, required this.name});
+  const PurchaseOrderVendor({
+    required this.id,
+    required this.code,
+    required this.name,
+  });
 
+  final String? id;
   final String? code;
   final String? name;
 }
@@ -241,11 +246,13 @@ String? _parseUnitId(Map<String, dynamic> json) {
 }
 
 PurchaseOrderVendor? _parseVendor(Map<String, dynamic> json) {
+  String? id = _stringValue(json['vendor_id']) ?? _stringValue(json['supplier_id']);
   String? code = _stringValue(json['vendor_code']) ?? _stringValue(json['supplier_code']);
   String? name = _stringValue(json['vendor_name']) ?? _stringValue(json['supplier_name']);
 
   final vendor = json['vendor'] ?? json['supplier'];
   if (vendor is Map<String, dynamic>) {
+    id = id ?? _stringValue(vendor['id']);
     code = code ??
         _stringValue(vendor['code']) ??
         _stringValue(vendor['vendor_code']) ??
@@ -259,11 +266,11 @@ PurchaseOrderVendor? _parseVendor(Map<String, dynamic> json) {
     name ??= vendor.trim();
   }
 
-  if (code == null && name == null) {
+  if (id == null && code == null && name == null) {
     return null;
   }
 
-  return PurchaseOrderVendor(code: code, name: name);
+  return PurchaseOrderVendor(id: id, code: code, name: name);
 }
 
 String? _parseItemCode(Map<String, dynamic> json) {
