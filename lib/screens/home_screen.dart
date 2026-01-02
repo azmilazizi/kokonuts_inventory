@@ -226,13 +226,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 .toList(growable: false),
           ),
         ),
-        floatingActionButton: _controller.index == 1
-            ? null
-            : FloatingActionButton(
+        floatingActionButton: _controller.index == 2
+            ? FloatingActionButton(
                 tooltip: 'Add ${currentTab.title}',
                 onPressed: () => _openAddModal(context, currentTab.title),
                 child: const Icon(Icons.add),
-              ),
+              )
+            : null,
       ),
     );
   }
