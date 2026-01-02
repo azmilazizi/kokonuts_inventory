@@ -175,7 +175,7 @@ class _InventoryReceivingVoucherDialogState
       final unitPrice = _resolveUnitPrice(item);
       final unitPriceLabel = unitPrice != null ? _formatNumber(unitPrice) : '';
       final totalLabel = item.total != null ? _formatNumber(item.total!) : '0.00';
-      final lotNumber = _buildLotNumber(index: index);
+      final lotNumber = _buildLotNumber();
       return _ReceivingItemForm(
         item: item,
         quantityController: TextEditingController(text: quantityLabel),
@@ -197,14 +197,14 @@ class _InventoryReceivingVoucherDialogState
     return item.unitPrice;
   }
 
-  String _buildLotNumber({required int index}) {
+  String _buildLotNumber() {
     final options = _options;
     final prefix = options?.lotNumberPrefix?.trim();
     final normalizedPrefix = (prefix == null || prefix.isEmpty) ? 'LOT' : prefix;
     final month = _selectedDate.month.toString().padLeft(2, '0');
     final year = (_selectedDate.year % 100).toString().padLeft(2, '0');
     final baseNumber = options?.nextLotNumber ?? 1;
-    final nextNumber = (baseNumber + index).toString().padLeft(5, '0');
+    final nextNumber = baseNumber.toString().padLeft(5, '0');
     return '$normalizedPrefix-$month$year-$nextNumber';
   }
 
@@ -233,7 +233,7 @@ class _InventoryReceivingVoucherDialogState
       for (var i = 0; i < _itemForms.length; i++) {
         final form = _itemForms[i];
         if (form.autoLotNumber) {
-          form.lotNumberController.text = _buildLotNumber(index: i);
+          form.lotNumberController.text = _buildLotNumber();
         }
       }
     });
