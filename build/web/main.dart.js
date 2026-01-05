@@ -99978,7 +99978,7 @@ r.aE()
 s=A.b([new A.l3("Pending Receive",B.Kl,new A.aAF(r)),new A.l3("Inventory",B.qD,new A.aAG()),new A.l3("Stock Adjustment",B.Km,new A.aAH(r)),new A.l3("Inventory History",B.qC,new A.aAI())],t.jq)
 r.e!==$&&A.bJ()
 r.e=s
-s=new A.GP(A.aO3(null,3,r),B.cj,4,3,3,$.a7())
+s=new A.GP(A.aO3(null,0,r),B.cj,4,0,0,$.a7())
 s.U(0,r.gUY())
 r.d!==$&&A.bJ()
 r.d=s},
@@ -105082,7 +105082,7 @@ a0=B.b.M(m.at.a.a)
 a1=g.w
 if(a1==null)a1=g.r
 if(a1==null)a1=""
-k=A.av(["supplier_code",b,"supplier_name",d,"buyer_id",c,"pr_order_id",a,"date_c",a0,"goods_receipt_code",e,"warehouse_id","0","total_tax_money",0,"total_goods_money",f,"value_of_inventory",f,"total_money",f,"addedfrom",a1,"approval",1,"items",i],t.N,t.K)
+k=A.av(["supplier_code",b,"supplier_name",d,"buyer_id",c,"pr_order_id",a,"date_add",a0,"goods_receipt_code",e,"warehouse_id","0","total_tax_money",0,"total_goods_money",f,"value_of_inventory",f,"total_money",f,"addedfrom",a1,"approval",1,"items",i],t.N,t.K)
 p=5
 s=8
 return A.y(m.r.D4(l,k),$async$vM)
