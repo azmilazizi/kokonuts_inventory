@@ -320,7 +320,7 @@ class _InventoryReceivingVoucherDialogState
       'supplier_name': detail.vendor?.name ?? '',
       'buyer_id': detail.buyerId ?? '',
       'pr_order_id': detail.id,
-      'date_c': _dateController.text.trim(),
+      'date_add': _dateController.text.trim(),
       'goods_receipt_code': goodsReceiptCode,
       'warehouse_id': '0',
       'total_tax_money': 0,
