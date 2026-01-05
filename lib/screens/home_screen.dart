@@ -56,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ),
     ];
     _controller = TabController(
-        length: _tabs.length, vsync: this, initialIndex: _tabs.length - 1)
+        length: _tabs.length, vsync: this, initialIndex: 0)
       ..addListener(_handleTabSelection);
   }
 
