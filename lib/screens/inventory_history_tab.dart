@@ -185,21 +185,34 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
     super.build(context);
     final theme = Theme.of(context);
 
-    return RefreshIndicator(
-      onRefresh: () => _fetchPage(reset: true),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final maxWidth = constraints.maxWidth.isFinite
-              ? constraints.maxWidth
-              : _minTableWidth;
-          final tableWidth = maxWidth < _minTableWidth
-              ? _minTableWidth
-              : maxWidth;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : _minTableWidth;
+        final tableWidth =
+            maxWidth < _minTableWidth ? _minTableWidth : maxWidth;
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SingleChildScrollView(
+              controller: _horizontalController,
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: tableWidth,
+                child: TableFilterBar(
+                  controller: _filterController,
+                  onChanged: _handleFilterChanged,
+                  hintText: 'Search by code, type, commodity, or warehouse',
+                  isFiltering: _filterController.text.isNotEmpty,
+                  horizontalController: _horizontalController,
+                ),
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () => _fetchPage(reset: true),
                 child: Scrollbar(
                   controller: _horizontalController,
                   thumbVisibility: true,
@@ -215,16 +228,6 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
                         controller: _scrollController,
                         physics: const AlwaysScrollableScrollPhysics(),
                         slivers: [
-                          SliverToBoxAdapter(
-                            child: TableFilterBar(
-                              controller: _filterController,
-                              onChanged: _handleFilterChanged,
-                              hintText:
-                                  'Search by code, type, commodity, or warehouse',
-                              isFiltering: _filterController.text.isNotEmpty,
-                              horizontalController: _horizontalController,
-                            ),
-                          ),
                           SliverPersistentHeader(
                             pinned: true,
                             delegate: _InventoryHistoryHeaderDelegate(
@@ -254,10 +257,10 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
                   ),
                 ),
               ),
-            ],
-          );
-        },
-      ),
+            ),
+          ],
+        );
+      },
     );
   }
 

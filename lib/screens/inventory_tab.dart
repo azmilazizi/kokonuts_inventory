@@ -143,12 +143,12 @@ class _InventoryTabState extends State<InventoryTab>
     final unitsById = {for (final unit in _units) unit.id: unit};
     final groupsById = {for (final group in _itemGroups) group.id: group};
 
-    return RefreshIndicator(
-      onRefresh: _loadData,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        children: [
-          LayoutBuilder(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: LayoutBuilder(
             builder: (context, constraints) {
               final isCompact = constraints.maxWidth < 600;
               final searchField = TextField(
@@ -202,41 +202,52 @@ class _InventoryTabState extends State<InventoryTab>
               );
             },
           ),
-          const SizedBox(height: 16),
-          if (_isLoading && _items.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 48),
-              child: Center(
-                child: CircularProgressIndicator(
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-            )
-          else if (_error != null)
-            _ErrorState(message: _error!, onRetry: _loadData)
-          else if (filteredItems.isEmpty)
-            _EmptyState(
-              message: 'No inventory items match the selected filters.',
-            )
-          else
-            ...filteredItems.map(
-              (item) => _InventoryItemCard(
-                item: item,
-                quantity: _calculateQuantity(item),
-                minValue: item.inventoryNumberMin ?? 0,
-                maxValue: item.inventoryNumberMax ?? 0,
-                unitLabel: unitsById[item.unitId]?.label ?? '—',
-                groupLabel: groupsById[item.groupId]?.label,
-                warehousesFilter: _selectedWarehouseIds,
-              ),
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: _loadData,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                if (_isLoading && _items.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 48),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  )
+                else if (_error != null)
+                  _ErrorState(message: _error!, onRetry: _loadData)
+                else if (filteredItems.isEmpty)
+                  _EmptyState(
+                    message: 'No inventory items match the selected filters.',
+                  )
+                else
+                  ...filteredItems.map(
+                    (item) => _InventoryItemCard(
+                      item: item,
+                      quantity: _calculateQuantity(item),
+                      minValue: item.inventoryNumberMin ?? 0,
+                      maxValue: item.inventoryNumberMax ?? 0,
+                      unitLabel: unitsById[item.unitId]?.label ?? '—',
+                      groupLabel: groupsById[item.groupId]?.label,
+                      warehousesFilter: _selectedWarehouseIds,
+                    ),
+                  ),
+                if (_isLoading && _items.isNotEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+              ],
             ),
-          if (_isLoading && _items.isNotEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-        ],
-      ),
+          ),
+        ),
+      ],
     );
   }
 

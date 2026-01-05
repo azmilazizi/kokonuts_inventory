@@ -199,20 +199,41 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
 
-    return RefreshIndicator(
-      onRefresh: () => _fetchPage(reset: true),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final maxWidth = constraints.maxWidth.isFinite
-              ? constraints.maxWidth
-              : _minTableWidth;
-          final isCompactLayout = maxWidth < _minTableWidth;
-          final tableWidth = isCompactLayout ? _minTableWidth : maxWidth;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : _minTableWidth;
+        final isCompactLayout = maxWidth < _minTableWidth;
+        final tableWidth = isCompactLayout ? _minTableWidth : maxWidth;
 
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SingleChildScrollView(
+              controller: _horizontalController,
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: tableWidth,
+                child: TableFilterBar(
+                  controller: _filterController,
+                  onChanged: _handleFilterChanged,
+                  hintText: 'Search by number, vendor, or total',
+                  isFiltering: _filterController.text.isNotEmpty,
+                  horizontalController: _horizontalController,
+                  trailing: DateRangeFilterButton(
+                    label: 'Order date',
+                    startDate: _filterStartDate,
+                    endDate: _filterEndDate,
+                    onRangeSelected: _handleDateRangeSelected,
+                    onClear: _clearDateRange,
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () => _fetchPage(reset: true),
                 child: Scrollbar(
                   controller: _horizontalController,
                   thumbVisibility: true,
@@ -228,22 +249,6 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
                         controller: _scrollController,
                         physics: const AlwaysScrollableScrollPhysics(),
                         slivers: [
-                          SliverToBoxAdapter(
-                            child: TableFilterBar(
-                              controller: _filterController,
-                              onChanged: _handleFilterChanged,
-                              hintText: 'Search by number, vendor, or total',
-                              isFiltering: _filterController.text.isNotEmpty,
-                              horizontalController: _horizontalController,
-                              trailing: DateRangeFilterButton(
-                                label: 'Order date',
-                                startDate: _filterStartDate,
-                                endDate: _filterEndDate,
-                                onRangeSelected: _handleDateRangeSelected,
-                                onClear: _clearDateRange,
-                              ),
-                            ),
-                          ),
                           SliverPersistentHeader(
                             pinned: true,
                             delegate: _PurchaseOrdersHeaderDelegate(
@@ -276,10 +281,10 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
                   ),
                 ),
               ),
-            ],
-          );
-        },
-      ),
+            ),
+          ],
+        );
+      },
     );
   }
 
