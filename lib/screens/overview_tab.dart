@@ -247,216 +247,227 @@ class _OverviewTabState extends State<OverviewTab>
     final theme = Theme.of(context);
     final dateFormatter = DateFormat('MMM dd, yyyy');
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        await _fetchSummary();
-        await _fetchCharts();
-        await _fetchTransactions();
-      },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(
-                        'Accounting Method: ',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onPrimaryContainer,
-                        ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Accounting Method: ',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer,
                       ),
-                      const SizedBox(width: 8),
-                      DropdownButton<String>(
-                        value: _accountingMethod,
-                        dropdownColor: theme.colorScheme.primaryContainer,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.bold,
+                    ),
+                    const SizedBox(width: 8),
+                    DropdownButton<String>(
+                      value: _accountingMethod,
+                      dropdownColor: theme.colorScheme.primaryContainer,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      underline: Container(
+                        height: 1,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                      icon: Icon(
+                        Icons.arrow_drop_down,
+                        color: theme.colorScheme.onPrimaryContainer,
+                      ),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _accountingMethod = newValue;
+                          });
+                          _fetchCharts();
+                          _fetchSummary();
+                          _fetchTransactions();
+                        }
+                      },
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'payment',
+                          child: Text('Cash'),
                         ),
-                        underline: Container(
-                          height: 1,
+                        DropdownMenuItem(
+                          value: 'issued',
+                          child: Text('Accrual'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                InkWell(
+                  onTap: _selectDateRange,
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8.0,
+                      horizontal: 4.0,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.calendar_today,
+                          size: 16,
                           color: theme.colorScheme.onPrimaryContainer,
                         ),
-                        icon: Icon(
+                        const SizedBox(width: 8),
+                        Text(
+                          '${dateFormatter.format(_startDate)} - ${dateFormatter.format(_endDate)}',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
                           Icons.arrow_drop_down,
                           color: theme.colorScheme.onPrimaryContainer,
                         ),
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            setState(() {
-                              _accountingMethod = newValue;
-                            });
-                            _fetchCharts();
-                            _fetchSummary();
-                            _fetchTransactions();
-                          }
-                        },
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'payment',
-                            child: Text('Cash'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'issued',
-                            child: Text('Accrual'),
-                          ),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                ),
+                const SizedBox(height: 16),
 
-                  InkWell(
-                    onTap: _selectDateRange,
-                    borderRadius: BorderRadius.circular(8),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 8.0,
-                        horizontal: 4.0,
+                Text(
+                  'Total Spent',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.onPrimaryContainer.withOpacity(0.8),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                if (_isLoading)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: theme.colorScheme.onPrimaryContainer,
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.calendar_today,
-                            size: 16,
-                            color: theme.colorScheme.onPrimaryContainer,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '${dateFormatter.format(_startDate)} - ${dateFormatter.format(_endDate)}',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.onPrimaryContainer,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.arrow_drop_down,
-                            color: theme.colorScheme.onPrimaryContainer,
-                          ),
-                        ],
-                      ),
+                    ),
+                  )
+                else if (_summary != null)
+                  Text(
+                    _summary!.totalSpent,
+                    style: theme.textTheme.headlineLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                  )
+                else
+                  Text(
+                    '--',
+                    style: theme.textTheme.headlineLarge?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        Expanded(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              await _fetchSummary();
+              await _fetchCharts();
+              await _fetchTransactions();
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Transaction Summary',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 16),
 
-                  Text(
-                    'Total Spent',
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer.withOpacity(0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  if (_isLoading)
-                     Padding(
-                       padding: const EdgeInsets.all(8.0),
-                       child: SizedBox(
-                         height: 24,
-                         width: 24,
-                         child: CircularProgressIndicator(
-                           strokeWidth: 2,
-                           color: theme.colorScheme.onPrimaryContainer,
-                         ),
-                       ),
-                     )
-                  else if (_summary != null)
-                    Text(
-                      _summary!.totalSpent,
-                      style: theme.textTheme.headlineLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onPrimaryContainer,
+                  if (_errorMessage != null)
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Text(
+                          _errorMessage!,
+                          style: TextStyle(color: theme.colorScheme.error),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                     )
-                  else
-                    Text(
-                      '--',
-                      style: theme.textTheme.headlineLarge?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                      ),
+                  else if (_summary != null)
+                    _TransactionSummarySection(summary: _summary!)
+                  else if (!_isLoading)
+                    const Center(child: Text('No data available')),
+
+                  const SizedBox(height: 32),
+
+                  Text(
+                    'Transactions by Type',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (_isChartLoading)
+                    const Center(child: CircularProgressIndicator())
+                  else if (_expensesPercentage != null)
+                    _ExpensesByTypeSection(
+                      data: _expensesPercentage!,
+                      accountingMethod: _accountingMethod,
+                    )
+                  else
+                    const Center(child: Text('No chart data available')),
+
+                  const SizedBox(height: 32),
+
+                  Text(
+                    'Transaction Details',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (_isTransactionsLoading)
+                    const Center(child: CircularProgressIndicator())
+                  else if (_transactionsError != null)
+                    Text(
+                      'Failed to load transactions: $_transactionsError',
+                      style: TextStyle(color: theme.colorScheme.error),
+                    )
+                  else if (_transactions.isNotEmpty)
+                    _TransactionsTable(transactions: _transactions)
+                  else
+                    const Text('No transactions found in this period.'),
+
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
-
-            const SizedBox(height: 24),
-
-            Text(
-              'Transaction Summary',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            if (_errorMessage != null)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32.0),
-                  child: Text(
-                    _errorMessage!,
-                    style: TextStyle(color: theme.colorScheme.error),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              )
-            else if (_summary != null)
-              _TransactionSummarySection(summary: _summary!)
-            else if (!_isLoading)
-              const Center(child: Text('No data available')),
-
-            const SizedBox(height: 32),
-
-            Text(
-              'Transactions by Type',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (_isChartLoading)
-              const Center(child: CircularProgressIndicator())
-            else if (_expensesPercentage != null)
-              _ExpensesByTypeSection(data: _expensesPercentage!, accountingMethod: _accountingMethod)
-            else
-              const Center(child: Text('No chart data available')),
-
-            const SizedBox(height: 32),
-
-            Text(
-              'Transaction Details',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 16),
-            if (_isTransactionsLoading)
-              const Center(child: CircularProgressIndicator())
-            else if (_transactionsError != null)
-               Text(
-                'Failed to load transactions: $_transactionsError',
-                style: TextStyle(color: theme.colorScheme.error),
-               )
-            else if (_transactions.isNotEmpty)
-              _TransactionsTable(transactions: _transactions)
-            else
-               const Text('No transactions found in this period.'),
-
-             const SizedBox(height: 32),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
