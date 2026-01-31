@@ -62,11 +62,6 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     super.initState();
     _setCurrentTime();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) => _setCurrentTime());
-    _updatedQuantityController.addListener(() {
-      if (mounted) {
-        setState(() {});
-      }
-    });
   }
 
   @override
@@ -643,11 +638,6 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       ),
     );
 
-    final currentQuantity = selectedLot.inventoryNumber;
-    if (_currentQuantityController.text != currentQuantity) {
-      _currentQuantityController.text = currentQuantity;
-    }
-
     var availableItems = _items
         .where((item) {
           final adjustedLots = adjustedLotsByItemId[item.id] ?? <String>{};
@@ -676,11 +666,6 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         availableItems = [...availableItems, selectedItem];
       }
     }
-
-    final canAdd = _selectedItemId != null &&
-        effectiveSelectedLotNumber != null &&
-        currentQuantity.isNotEmpty &&
-        _updatedQuantityController.text.trim().isNotEmpty;
 
     final readOnlyTextStyle = ReadOnlyFieldStyle.textStyle(theme);
 
@@ -767,11 +752,20 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                       const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(labelText: 'Updated Quantity'),
                 );
-                final addButton = IconButton(
-                  onPressed: canAdd ? _handleAddLineItem : null,
-                  icon: const Icon(Icons.check_circle_outline),
-                  tooltip: 'Add item',
-                  color: theme.colorScheme.primary,
+                final addButton = ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _updatedQuantityController,
+                  builder: (context, value, child) {
+                    final canAdd = _selectedItemId != null &&
+                        effectiveSelectedLotNumber != null &&
+                        selectedLot.inventoryNumber.isNotEmpty &&
+                        value.text.trim().isNotEmpty;
+                    return IconButton(
+                      onPressed: canAdd ? _handleAddLineItem : null,
+                      icon: const Icon(Icons.check_circle_outline),
+                      tooltip: 'Add item',
+                      color: theme.colorScheme.primary,
+                    );
+                  },
                 );
 
                 if (isCompact) {
@@ -920,6 +914,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       _selectedItemId = null;
       _selectedLotNumber = null;
       _lots = const [];
+      _currentQuantityController.clear();
       _updatedQuantityController.clear();
     });
   }
