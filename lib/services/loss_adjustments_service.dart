@@ -127,10 +127,15 @@ class LossAdjustmentsService {
   }
 
   Future<void> saveDraftLossAdjustment({
+    required String id,
     required Map<String, String> headers,
     required Map<String, dynamic> payload,
   }) async {
-    final uri = Uri.parse(_baseUrl);
+    final trimmedId = id.trim();
+    if (trimmedId.isEmpty) {
+      throw const LossAdjustmentsException('Missing loss adjustment id.');
+    }
+    final uri = Uri.parse('$_detailBaseUrl/$trimmedId');
     http.Response response;
     try {
       response = await _client.put(

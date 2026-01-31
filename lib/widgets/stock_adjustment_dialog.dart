@@ -970,6 +970,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       final hasExistingId = adjustmentId != null && adjustmentId.isNotEmpty;
       if (isDraft && hasExistingId) {
         await _lossAdjustmentsService.saveDraftLossAdjustment(
+          id: adjustmentId,
           headers: headers,
           payload: payload,
         );
