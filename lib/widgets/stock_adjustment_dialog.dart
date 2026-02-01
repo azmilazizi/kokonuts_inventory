@@ -56,6 +56,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   bool _isLoading = false;
   String? _loadingError;
   bool _isSaving = false;
+  bool _hasLoadedData = false;
 
   @override
   void initState() {
@@ -77,6 +78,10 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (_hasLoadedData) {
+      return;
+    }
+    _hasLoadedData = true;
     _loadData();
   }
 
