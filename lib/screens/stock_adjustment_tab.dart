@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart' show LinkedScrollControllerGroup;
 
 import '../app/app_state_scope.dart';
 import '../services/loss_adjustments_service.dart';
@@ -25,7 +26,9 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab>
     with AutomaticKeepAliveClientMixin {
   final _service = LossAdjustmentsService();
   final _scrollController = ScrollController();
-  final _horizontalController = ScrollController();
+  late final LinkedScrollControllerGroup _horizontalControllers;
+  late final ScrollController _horizontalHeaderController;
+  late final ScrollController _horizontalTableController;
   final _entriesByKey = <String, LossAdjustmentEntry>{};
   final _displayEntries = <LossAdjustmentEntry>[];
   final _filterController = TextEditingController();
@@ -45,6 +48,9 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab>
   @override
   void initState() {
     super.initState();
+    _horizontalControllers = LinkedScrollControllerGroup();
+    _horizontalHeaderController = _horizontalControllers.addAndGet();
+    _horizontalTableController = _horizontalControllers.addAndGet();
     _scrollController.addListener(_handleScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchPage(reset: true);
@@ -55,7 +61,8 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab>
   void dispose() {
     _scrollController.removeListener(_handleScroll);
     _scrollController.dispose();
-    _horizontalController.dispose();
+    _horizontalHeaderController.dispose();
+    _horizontalTableController.dispose();
     _filterController.dispose();
     super.dispose();
   }
@@ -191,7 +198,7 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SingleChildScrollView(
-              controller: _horizontalController,
+              controller: _horizontalHeaderController,
               scrollDirection: Axis.horizontal,
               child: SizedBox(
                 width: tableWidth,
@@ -200,7 +207,7 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab>
                   onChanged: _handleFilterChanged,
                   hintText: 'Search by type, status, creator, or date',
                   isFiltering: _filterController.text.isNotEmpty,
-                  horizontalController: _horizontalController,
+                  horizontalController: _horizontalTableController,
                 ),
               ),
             ),
@@ -208,12 +215,12 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab>
               child: RefreshIndicator(
                 onRefresh: () => _fetchPage(reset: true),
                 child: Scrollbar(
-                  controller: _horizontalController,
+                  controller: _horizontalTableController,
                   thumbVisibility: true,
                   notificationPredicate: (notification) =>
                       notification.metrics.axis == Axis.horizontal,
                   child: SingleChildScrollView(
-                    controller: _horizontalController,
+                    controller: _horizontalTableController,
                     scrollDirection: Axis.horizontal,
                     child: SizedBox(
                       width: tableWidth,
