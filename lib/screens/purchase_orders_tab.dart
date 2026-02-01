@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart' show LinkedScrollControllerGroup;
 
 import '../app/app_state_scope.dart';
 import '../services/purchase_orders_service.dart';
@@ -28,7 +29,9 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
     with AutomaticKeepAliveClientMixin {
   final _service = PurchaseOrdersService();
   final _scrollController = ScrollController();
-  final _horizontalController = ScrollController();
+  late final LinkedScrollControllerGroup _horizontalControllers;
+  late final ScrollController _horizontalHeaderController;
+  late final ScrollController _horizontalTableController;
   final _orders = <PurchaseOrder>[];
   final _allOrders = <PurchaseOrder>[];
   final _filterController = TextEditingController();
@@ -54,6 +57,9 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
   @override
   void initState() {
     super.initState();
+    _horizontalControllers = LinkedScrollControllerGroup();
+    _horizontalHeaderController = _horizontalControllers.addAndGet();
+    _horizontalTableController = _horizontalControllers.addAndGet();
     _scrollController.addListener(_handleScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchPage(reset: true);
@@ -64,7 +70,8 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
   void dispose() {
     _scrollController.removeListener(_handleScroll);
     _scrollController.dispose();
-    _horizontalController.dispose();
+    _horizontalHeaderController.dispose();
+    _horizontalTableController.dispose();
     _filterController.dispose();
     super.dispose();
   }
@@ -211,7 +218,7 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SingleChildScrollView(
-              controller: _horizontalController,
+              controller: _horizontalHeaderController,
               scrollDirection: Axis.horizontal,
               child: SizedBox(
                 width: tableWidth,
@@ -220,7 +227,7 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
                   onChanged: _handleFilterChanged,
                   hintText: 'Search by number, vendor, or total',
                   isFiltering: _filterController.text.isNotEmpty,
-                  horizontalController: _horizontalController,
+                  horizontalController: _horizontalTableController,
                   trailing: DateRangeFilterButton(
                     label: 'Order date',
                     startDate: _filterStartDate,
@@ -235,12 +242,12 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
               child: RefreshIndicator(
                 onRefresh: () => _fetchPage(reset: true),
                 child: Scrollbar(
-                  controller: _horizontalController,
+                  controller: _horizontalTableController,
                   thumbVisibility: true,
                   notificationPredicate: (notification) =>
                       notification.metrics.axis == Axis.horizontal,
                   child: SingleChildScrollView(
-                    controller: _horizontalController,
+                    controller: _horizontalTableController,
                     scrollDirection: Axis.horizontal,
                     child: SizedBox(
                       width: tableWidth,

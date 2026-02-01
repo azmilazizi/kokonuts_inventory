@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart' show LinkedScrollControllerGroup;
 
 import '../app/app_state_scope.dart';
 import '../services/warehouse_history_service.dart';
@@ -28,7 +29,9 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
     with AutomaticKeepAliveClientMixin {
   final _service = WarehouseHistoryService();
   final _scrollController = ScrollController();
-  final _horizontalController = ScrollController();
+  late final LinkedScrollControllerGroup _horizontalControllers;
+  late final ScrollController _horizontalHeaderController;
+  late final ScrollController _horizontalTableController;
   final _entriesByKey = <String, WarehouseHistoryEntry>{};
   final _displayEntries = <WarehouseHistoryEntry>[];
   final _filterController = TextEditingController();
@@ -51,6 +54,9 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
   @override
   void initState() {
     super.initState();
+    _horizontalControllers = LinkedScrollControllerGroup();
+    _horizontalHeaderController = _horizontalControllers.addAndGet();
+    _horizontalTableController = _horizontalControllers.addAndGet();
     _scrollController.addListener(_handleScroll);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchPage(reset: true);
@@ -61,7 +67,8 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
   void dispose() {
     _scrollController.removeListener(_handleScroll);
     _scrollController.dispose();
-    _horizontalController.dispose();
+    _horizontalHeaderController.dispose();
+    _horizontalTableController.dispose();
     _filterController.dispose();
     super.dispose();
   }
@@ -197,7 +204,7 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SingleChildScrollView(
-              controller: _horizontalController,
+              controller: _horizontalHeaderController,
               scrollDirection: Axis.horizontal,
               child: SizedBox(
                 width: tableWidth,
@@ -206,7 +213,7 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
                   onChanged: _handleFilterChanged,
                   hintText: 'Search by code, type, commodity, or warehouse',
                   isFiltering: _filterController.text.isNotEmpty,
-                  horizontalController: _horizontalController,
+                  horizontalController: _horizontalTableController,
                 ),
               ),
             ),
@@ -214,12 +221,12 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
               child: RefreshIndicator(
                 onRefresh: () => _fetchPage(reset: true),
                 child: Scrollbar(
-                  controller: _horizontalController,
+                  controller: _horizontalTableController,
                   thumbVisibility: true,
                   notificationPredicate: (notification) =>
                       notification.metrics.axis == Axis.horizontal,
                   child: SingleChildScrollView(
-                    controller: _horizontalController,
+                    controller: _horizontalTableController,
                     scrollDirection: Axis.horizontal,
                     child: SizedBox(
                       width: tableWidth,
