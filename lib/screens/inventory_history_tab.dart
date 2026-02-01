@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart' show LinkedScrollControllerGroup;
+import 'package:linked_scroll_controller/linked_scroll_controller.dart';
 
 import '../app/app_state_scope.dart';
 import '../services/warehouse_history_service.dart';
@@ -197,8 +197,9 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
         final maxWidth = constraints.maxWidth.isFinite
             ? constraints.maxWidth
             : _minTableWidth;
-        final tableWidth =
-            maxWidth < _minTableWidth ? _minTableWidth : maxWidth;
+        final tableWidth = maxWidth < _minTableWidth
+            ? _minTableWidth
+            : maxWidth;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

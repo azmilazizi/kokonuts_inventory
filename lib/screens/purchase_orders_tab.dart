@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart' show LinkedScrollControllerGroup;
+import 'package:linked_scroll_controller/linked_scroll_controller.dart';
 
 import '../app/app_state_scope.dart';
 import '../services/purchase_orders_service.dart';
@@ -10,13 +10,7 @@ import '../widgets/purchase_order_details_dialog.dart';
 import '../widgets/sortable_header_cell.dart';
 import '../widgets/table_filter_bar.dart';
 
-enum PurchaseOrderSortColumn {
-  number,
-  name,
-  vendor,
-  orderDate,
-  deliveryDate,
-}
+enum PurchaseOrderSortColumn { number, name, vendor, orderDate, deliveryDate }
 
 class PurchaseOrdersTab extends StatefulWidget {
   const PurchaseOrdersTab({super.key});

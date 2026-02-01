@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart' show LinkedScrollControllerGroup;
-
+import 'package:linked_scroll_controller/linked_scroll_controller.dart';
 import '../app/app_state_scope.dart';
 import '../services/loss_adjustments_service.dart';
 import '../widgets/stock_adjustment_dialog.dart';
@@ -105,15 +104,19 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab>
     }
 
     final rawToken = (appState.rawAuthToken ?? token).trim();
-    final sanitizedToken =
-        token.replaceFirst(RegExp('^Bearer\\s+', caseSensitive: false), '').trim();
-    final normalizedAuth =
-        sanitizedToken.isNotEmpty ? 'Bearer $sanitizedToken' : token.trim();
+    final sanitizedToken = token
+        .replaceFirst(RegExp('^Bearer\\s+', caseSensitive: false), '')
+        .trim();
+    final normalizedAuth = sanitizedToken.isNotEmpty
+        ? 'Bearer $sanitizedToken'
+        : token.trim();
     final autoTokenValue = rawToken
         .replaceFirst(RegExp('^Bearer\\s+', caseSensitive: false), '')
         .trim();
 
-    final authtokenHeader = autoTokenValue.isNotEmpty ? autoTokenValue : sanitizedToken;
+    final authtokenHeader = autoTokenValue.isNotEmpty
+        ? autoTokenValue
+        : sanitizedToken;
 
     final pageToLoad = reset ? 1 : _nextPage;
 
@@ -191,8 +194,9 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab>
         final maxWidth = constraints.maxWidth.isFinite
             ? constraints.maxWidth
             : _minTableWidth;
-        final tableWidth =
-            maxWidth < _minTableWidth ? _minTableWidth : maxWidth;
+        final tableWidth = maxWidth < _minTableWidth
+            ? _minTableWidth
+            : maxWidth;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -239,18 +243,18 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab>
                             ),
                           ),
                           SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final entry = _displayEntries[index];
-                                return _StockAdjustmentRow(
-                                  entry: entry,
-                                  theme: theme,
-                                  showTopBorder: index == 0,
-                                  onAction: _handleAction,
-                                );
-                              },
-                              childCount: _displayEntries.length,
-                            ),
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final entry = _displayEntries[index];
+                              return _StockAdjustmentRow(
+                                entry: entry,
+                                theme: theme,
+                                showTopBorder: index == 0,
+                                onAction: _handleAction,
+                              );
+                            }, childCount: _displayEntries.length),
                           ),
                           _buildFooterSliver(theme),
                         ],
@@ -297,9 +301,9 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab>
         _deleteAdjustment(entry);
         break;
       default:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$label is not available yet.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('$label is not available yet.')));
     }
   }
 
@@ -356,22 +360,26 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab>
     }
 
     if (token == null || token.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You are not logged in.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('You are not logged in.')));
       return;
     }
 
     final rawToken = (appState.rawAuthToken ?? token).trim();
-    final sanitizedToken =
-        token.replaceFirst(RegExp('^Bearer\\s+', caseSensitive: false), '').trim();
-    final normalizedAuth =
-        sanitizedToken.isNotEmpty ? 'Bearer $sanitizedToken' : token.trim();
+    final sanitizedToken = token
+        .replaceFirst(RegExp('^Bearer\\s+', caseSensitive: false), '')
+        .trim();
+    final normalizedAuth = sanitizedToken.isNotEmpty
+        ? 'Bearer $sanitizedToken'
+        : token.trim();
     final autoTokenValue = rawToken
         .replaceFirst(RegExp('^Bearer\\s+', caseSensitive: false), '')
         .trim();
 
-    final authtokenHeader = autoTokenValue.isNotEmpty ? autoTokenValue : sanitizedToken;
+    final authtokenHeader = autoTokenValue.isNotEmpty
+        ? autoTokenValue
+        : sanitizedToken;
 
     try {
       await _service.deleteLossAdjustment(
@@ -393,16 +401,16 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab>
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } catch (error) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
     }
   }
 
@@ -458,9 +466,9 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab>
       case StockAdjustmentSortColumn.lastUpdated:
         return _compareDates(a.lastUpdated, b.lastUpdated);
       case StockAdjustmentSortColumn.status:
-        return _statusLabel(a.status)
-            .toLowerCase()
-            .compareTo(_statusLabel(b.status).toLowerCase());
+        return _statusLabel(
+          a.status,
+        ).toLowerCase().compareTo(_statusLabel(b.status).toLowerCase());
       case StockAdjustmentSortColumn.creator:
         return a.creator.toLowerCase().compareTo(b.creator.toLowerCase());
     }
@@ -496,8 +504,9 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab>
               children: [
                 Text(
                   _error!,
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: theme.colorScheme.error),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.error,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
@@ -561,9 +570,7 @@ class StockAdjustmentTabState extends State<StockAdjustmentTab>
       );
     }
 
-    return const SliverToBoxAdapter(
-      child: SizedBox.shrink(),
-    );
+    return const SliverToBoxAdapter(child: SizedBox.shrink());
   }
 
   @override
@@ -730,7 +737,10 @@ class _StockAdjustmentRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
       child: Row(
         children: [
-          _DataCell(_displayValue(_formatType(entry.type)), flex: _columnFlex[0]),
+          _DataCell(
+            _displayValue(_formatType(entry.type)),
+            flex: _columnFlex[0],
+          ),
           _DataCell(
             _displayValue(entry.dateCreated),
             flex: _columnFlex[1],
@@ -742,7 +752,10 @@ class _StockAdjustmentRow extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           _StatusPillCell(entry.status, flex: _columnFlex[3]),
-          _DataCell(_displayValue(_firstName(entry.creator)), flex: _columnFlex[4]),
+          _DataCell(
+            _displayValue(_firstName(entry.creator)),
+            flex: _columnFlex[4],
+          ),
           const SizedBox(width: 12),
           Expanded(
             flex: _columnFlex[5],
@@ -807,7 +820,9 @@ class _StockAdjustmentRow extends StatelessWidget {
       return trimmed;
     }
     final lower = trimmed.toLowerCase();
-    return lower.isEmpty ? trimmed : '${lower[0].toUpperCase()}${lower.substring(1)}';
+    return lower.isEmpty
+        ? trimmed
+        : '${lower[0].toUpperCase()}${lower.substring(1)}';
   }
 
   String _firstName(String value) {
@@ -821,11 +836,7 @@ class _StockAdjustmentRow extends StatelessWidget {
 }
 
 class _DataCell extends StatelessWidget {
-  const _DataCell(
-    this.value, {
-    required this.flex,
-    this.textAlign,
-  });
+  const _DataCell(this.value, {required this.flex, this.textAlign});
 
   final String value;
   final int flex;
@@ -939,10 +950,7 @@ _PillColors _statusPillColors(ThemeData theme, String value) {
 }
 
 class _PillColors {
-  const _PillColors({
-    required this.background,
-    required this.foreground,
-  });
+  const _PillColors({required this.background, required this.foreground});
 
   final Color background;
   final Color foreground;
