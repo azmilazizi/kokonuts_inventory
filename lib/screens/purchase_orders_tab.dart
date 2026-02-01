@@ -274,7 +274,7 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
                               );
                             }, childCount: _orders.length),
                           ),
-                          SliverToBoxAdapter(child: _buildFooter(theme)),
+                          _buildFooterSliver(theme),
                         ],
                       ),
                     ),
@@ -474,7 +474,18 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
     }
   }
 
-  Widget _buildFooter(ThemeData theme) {
+  SliverToBoxAdapter _buildFooterAdapter(Widget child) {
+    return SliverToBoxAdapter(child: child);
+  }
+
+  SliverFillRemaining _buildFooterFill(Widget child) {
+    return SliverFillRemaining(
+      hasScrollBody: false,
+      child: Center(child: child),
+    );
+  }
+
+  Widget _buildFooterContent(ThemeData theme) {
     if (_isLoading && _orders.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 48),
@@ -551,6 +562,20 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
     }
 
     return const SizedBox.shrink();
+  }
+
+  Widget _buildFooterSliver(ThemeData theme) {
+    final content = _buildFooterContent(theme);
+    if (_isLoading && _orders.isEmpty) {
+      return _buildFooterFill(content);
+    }
+    if (_error != null) {
+      return _buildFooterFill(content);
+    }
+    if (_orders.isEmpty) {
+      return _buildFooterFill(content);
+    }
+    return _buildFooterAdapter(content);
   }
 
   @override

@@ -250,7 +250,7 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
                               );
                             }, childCount: _displayEntries.length),
                           ),
-                          SliverToBoxAdapter(child: _buildFooter(theme)),
+                          _buildFooterSliver(theme),
                         ],
                       ),
                     ),
@@ -380,7 +380,18 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
     return double.tryParse(normalized) ?? 0;
   }
 
-  Widget _buildFooter(ThemeData theme) {
+  SliverToBoxAdapter _buildFooterAdapter(Widget child) {
+    return SliverToBoxAdapter(child: child);
+  }
+
+  SliverFillRemaining _buildFooterFill(Widget child) {
+    return SliverFillRemaining(
+      hasScrollBody: false,
+      child: Center(child: child),
+    );
+  }
+
+  Widget _buildFooterContent(ThemeData theme) {
     if (_isLoading && _displayEntries.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 48),
@@ -457,6 +468,20 @@ class _InventoryHistoryTabState extends State<InventoryHistoryTab>
     }
 
     return const SizedBox.shrink();
+  }
+
+  Widget _buildFooterSliver(ThemeData theme) {
+    final content = _buildFooterContent(theme);
+    if (_isLoading && _displayEntries.isEmpty) {
+      return _buildFooterFill(content);
+    }
+    if (_error != null) {
+      return _buildFooterFill(content);
+    }
+    if (_displayEntries.isEmpty) {
+      return _buildFooterFill(content);
+    }
+    return _buildFooterAdapter(content);
   }
 
   @override
