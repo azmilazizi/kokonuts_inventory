@@ -30677,7 +30677,7 @@ _.dx=j
 _.dy=k
 _.fr=!1
 _.fx=null
-_.fy=!1
+_.go=_.fy=!1
 _.c=_.a=null},
 aJn:function aJn(a){this.a=a},
 aJ6:function aJ6(a){this.a=a},
@@ -105838,8 +105838,11 @@ q=r.x
 q.P$=s
 q.J$=0
 r.ao()},
-b5(){this.c0()
-this.w5()},
+b5(){var s=this
+s.c0()
+if(s.go)return
+s.go=!0
+s.w5()},
 XU(){var s=A.b3G("yyyy-MM-dd HH:mm:ss",null).xY(new A.bX(Date.now(),0,!1)),r=this.f
 if(r.a.a!==s)r.scb(0,s)},
 w5(){var s=0,r=A.H(t.H),q,p=2,o=[],n=[],m=this,l,k,j,i,h,g,f,e,d,c,b,a
