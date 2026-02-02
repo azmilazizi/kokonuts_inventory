@@ -611,8 +611,6 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         _selectedType!.trim().isNotEmpty &&
         _selectedWarehouseId != null &&
         _selectedWarehouseId!.trim().isNotEmpty;
-    final hasSelectedItem =
-        _selectedItemId != null && _selectedItemId!.trim().isNotEmpty;
 
     final adjustedLotsByItemId = <String, Set<String>>{};
     for (final item in _lineItems) {
@@ -623,10 +621,13 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       adjustedLotsByItemId.putIfAbsent(itemId, () => <String>{}).add(item.lotNumber);
     }
 
+    final hasSelectedItem =
+        _selectedItemId != null && _selectedItemId!.trim().isNotEmpty;
     final adjustedLotsForSelectedItem = hasSelectedItem
         ? adjustedLotsByItemId[_selectedItemId] ?? <String>{}
         : <String>{};
     final availableLots = _lots
+        .where((lot) => _isDisplayableLot(lot))
         .where((lot) => !adjustedLotsForSelectedItem.contains(lot.lotNumber))
         .toList();
     final effectiveSelectedLotNumber = availableLots.any(
@@ -643,34 +644,27 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       ),
     );
 
-    var availableItems = _items
+    final availableItems = _items
         .where((item) {
+          if (!_isDisplayableItem(item)) {
+            return false;
+          }
           final adjustedLots = adjustedLotsByItemId[item.id] ?? <String>{};
           final knownLots = _lotsByItemId[item.id];
           if (knownLots == null) {
             return true;
           }
           return knownLots.any(
-            (lot) => !adjustedLots.contains(lot.lotNumber),
+            (lot) => _isDisplayableLot(lot) && !adjustedLots.contains(lot.lotNumber),
           );
         })
         .toList();
-    if (hasSelectedItem &&
-        !availableItems.any((item) => item.id == _selectedItemId)) {
-      final selectedItem = _items.firstWhere(
-        (item) => item.id == _selectedItemId,
-        orElse: () => const StocktakeItemOption(
-          id: '',
-          skuCode: null,
-          skuName: 'Unknown item',
-          total: null,
-          unitId: null,
-        ),
-      );
-      if (selectedItem.id.isNotEmpty) {
-        availableItems = [...availableItems, selectedItem];
-      }
-    }
+    final effectiveSelectedItemId = availableItems.any(
+      (item) => item.id == _selectedItemId,
+    )
+        ? _selectedItemId
+        : null;
+    final hasEffectiveSelection = effectiveSelectedItemId != null;
 
     final readOnlyTextStyle = ReadOnlyFieldStyle.textStyle(theme);
 
@@ -683,7 +677,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             DropdownButtonFormField<String>(
-              value: _selectedItemId,
+              value: effectiveSelectedItemId,
               isExpanded: true,
               decoration: canSelectItem
                   ? const InputDecoration(labelText: 'Select an Item')
@@ -708,13 +702,13 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                 final isCompact = constraints.maxWidth < 600;
                 final lotField = DropdownButtonFormField<String>(
                   value: effectiveSelectedLotNumber,
-                  decoration: hasSelectedItem
+                  decoration: hasEffectiveSelection
                       ? const InputDecoration(labelText: 'Lot Number')
                       : ReadOnlyFieldStyle.decoration(
                           theme,
                           labelText: 'Lot Number',
                         ),
-                  style: hasSelectedItem ? null : readOnlyTextStyle,
+                  style: hasEffectiveSelection ? null : readOnlyTextStyle,
                   items: availableLots
                       .map(
                         (lot) => DropdownMenuItem(
@@ -723,7 +717,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                         ),
                       )
                       .toList(),
-                  onChanged: hasSelectedItem
+                  onChanged: hasEffectiveSelection
                       ? (value) {
                           setState(() {
                             _selectedLotNumber = value;
@@ -742,7 +736,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                 );
                 final currentQuantityField = TextFormField(
                   readOnly: true,
-                  enabled: hasSelectedItem,
+                  enabled: hasEffectiveSelection,
                   controller: _currentQuantityController,
                   style: readOnlyTextStyle,
                   decoration: ReadOnlyFieldStyle.decoration(
@@ -752,7 +746,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                 );
                 final updatedQuantityField = TextFormField(
                   controller: _updatedQuantityController,
-                  enabled: hasSelectedItem,
+                  enabled: hasEffectiveSelection,
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(labelText: 'Updated Quantity'),
@@ -760,7 +754,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                 final addButton = ValueListenableBuilder<TextEditingValue>(
                   valueListenable: _updatedQuantityController,
                   builder: (context, value, child) {
-                    final canAdd = _selectedItemId != null &&
+                    final canAdd = effectiveSelectedItemId != null &&
                         effectiveSelectedLotNumber != null &&
                         selectedLot.inventoryNumber.isNotEmpty &&
                         value.text.trim().isNotEmpty;
@@ -809,6 +803,36 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         ),
       ),
     );
+  }
+
+  bool _isDisplayableItem(StocktakeItemOption item) {
+    final total = _parseInventoryNumber(item.total);
+    if (total != null && total <= 0) {
+      return false;
+    }
+    return true;
+  }
+
+  bool _isDisplayableLot(StocktakeLotOption lot) {
+    if (lot.lotNumber.trim().isEmpty) {
+      return false;
+    }
+    final inventory = _parseInventoryNumber(lot.inventoryNumber);
+    if (inventory == null || inventory <= 0) {
+      return false;
+    }
+    return true;
+  }
+
+  num? _parseInventoryNumber(String? value) {
+    if (value == null) {
+      return null;
+    }
+    final cleaned = value.replaceAll(',', '').trim();
+    if (cleaned.isEmpty) {
+      return null;
+    }
+    return num.tryParse(cleaned);
   }
 
   void _resetSelectedItem() {
