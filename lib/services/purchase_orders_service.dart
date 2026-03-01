@@ -102,6 +102,7 @@ class PurchaseOrdersService {
     String? fromDate,
     String? toDate,
     String? orderStatus,
+    List<String>? requiredOrderStatuses,
   }) async {
     final params = <String, String>{
       'page': '$page',
@@ -115,6 +116,18 @@ class PurchaseOrdersService {
     if (toDate != null) params['to'] = toDate;
     if (orderStatus != null && orderStatus.trim().isNotEmpty) {
       params['order_status'] = orderStatus.trim();
+    }
+
+    if (requiredOrderStatuses != null) {
+      var filterIndex = 4;
+      for (final status in requiredOrderStatuses) {
+        final normalized = status.trim();
+        if (normalized.isEmpty) {
+          continue;
+        }
+        params['or[$filterIndex][order_status]'] = normalized;
+        filterIndex += 1;
+      }
     }
 
     final uri = Uri.parse(_baseUrl).replace(queryParameters: params);

@@ -112,6 +112,7 @@ class PurchaseOrdersTabState extends State<PurchaseOrdersTab>
         page: pageToLoad,
         perPage: _perPage,
         headers: headers,
+        requiredOrderStatuses: const ['new', 'delivered'],
       );
 
       if (!mounted) {
