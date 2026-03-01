@@ -142,6 +142,10 @@ class PurchaseOrdersService {
     final ordersList = _extractOrdersList(decoded);
     final orders = ordersList
         .whereType<Map<String, dynamic>>()
+        .where((order) {
+          final status = order['order_status']?.toString().trim().toLowerCase();
+          return status != 'refund';
+        })
         .map(PurchaseOrder.fromJson)
         .toList();
 
