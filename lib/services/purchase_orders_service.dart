@@ -101,6 +101,7 @@ class PurchaseOrdersService {
     required Map<String, String> headers,
     String? fromDate,
     String? toDate,
+    String? orderStatus,
   }) async {
     final params = <String, String>{
       'page': '$page',
@@ -112,6 +113,9 @@ class PurchaseOrdersService {
     };
     if (fromDate != null) params['from'] = fromDate;
     if (toDate != null) params['to'] = toDate;
+    if (orderStatus != null && orderStatus.trim().isNotEmpty) {
+      params['order_status'] = orderStatus.trim();
+    }
 
     final uri = Uri.parse(_baseUrl).replace(queryParameters: params);
 
