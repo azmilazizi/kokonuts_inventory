@@ -103021,7 +103021,7 @@ azy(a0,a1,a2,a3){var s=0,r=A.H(t.R5),q,p=2,o=[],n=this,m,l,k,j,i,h,g,f,e,d,c,b,a
 var $async$DU=A.D(function(a5,a6){if(a5===1){o.push(a6)
 s=p}while(true)switch(s){case 0:c=t.N
 b=A.ax(["page",""+a1,"per_page",""+a2,"or[0][status]","0","or[1][delivery_status]","0","or[2][status_goods]","0","or[3][delivery_date]","null"],c,c)
-for(j=4,i=0;i<2;++i){h=B.b.M(a3[i])
+for(j=4,i=0;i<1;++i){h=B.b.M(a3[i])
 if(h.length===0)continue
 b.n(0,"or["+j+"][order_status]",h);++j}m=A.cj(u.a,0,null).z2(0,b)
 l=null
@@ -113037,7 +113037,7 @@ B.iM=s(["name","commodity_name","commodityName"],t.s)
 B.rm=s(["name","full_name","username","email"],t.s)
 B.OX=s(["name","item_name","title"],t.s)
 B.rn=s(["name","warehouse_name","warehouseName"],t.s)
-B.OY=s(["new","delivered"],t.s)
+B.OY=s(["new"],t.s)
 B.P3=s(["unit_name","name","title","label","symbol","unit"],t.s)
 B.m6=s(["sku_code","skuCode","sku"],t.s)
 B.m7=s(["sku_name","skuName","name"],t.s)
