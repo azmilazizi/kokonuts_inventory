@@ -29,7 +29,8 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   final _lossAdjustmentsService = LossAdjustmentsService();
   final _stocktakeService = StocktakeService();
 
-  final _timeController = TextEditingController();
+  final _lossAdjustmentDateController = TextEditingController();
+  final _lastUpdatedController = TextEditingController();
   final _currentQuantityController = TextEditingController();
   final _updatedQuantityController = TextEditingController();
   final _warehouseNameController = TextEditingController();
@@ -61,14 +62,21 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   @override
   void initState() {
     super.initState();
-    _setCurrentTime();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _setCurrentTime());
+    _setCurrentDate();
+    _setCurrentLastUpdated();
+    if (!_isResumeMode) {
+      _timer = Timer.periodic(
+        const Duration(seconds: 1),
+        (_) => _setCurrentLastUpdated(),
+      );
+    }
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    _timeController.dispose();
+    _lossAdjustmentDateController.dispose();
+    _lastUpdatedController.dispose();
     _currentQuantityController.dispose();
     _updatedQuantityController.dispose();
     _warehouseNameController.dispose();
@@ -85,10 +93,17 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     _loadData();
   }
 
-  void _setCurrentTime() {
+  void _setCurrentDate() {
+    final formatted = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    if (_lossAdjustmentDateController.text != formatted) {
+      _lossAdjustmentDateController.text = formatted;
+    }
+  }
+
+  void _setCurrentLastUpdated() {
     final formatted = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
-    if (_timeController.text != formatted) {
-      _timeController.text = formatted;
+    if (_lastUpdatedController.text != formatted) {
+      _lastUpdatedController.text = formatted;
     }
   }
 
@@ -199,6 +214,12 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     _detailWarehouseName = warehouseName ?? warehousesName ?? nestedWarehouseName;
 
     setState(() {
+      _lossAdjustmentDateController.text =
+          _readString(detail, const ['date_create', 'date_created', 'created_at']) ??
+              _lossAdjustmentDateController.text;
+      _lastUpdatedController.text =
+          _readString(detail, const ['time', 'updated_at', 'date_update']) ??
+              _lastUpdatedController.text;
       _selectedType = _resolveTypeSelection(rawType);
       _selectedWarehouseId = resolvedWarehouseId;
       _selectedWarehouseName = resolvedWarehouseName;
@@ -398,7 +419,9 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                     ),
                   ),
                 if (widget.subtitle != null) const SizedBox(height: 12),
-                _buildTimeField(),
+                _buildLossAdjustmentDateField(),
+                const SizedBox(height: 12),
+                _buildLastUpdatedField(),
                 const SizedBox(height: 12),
                 _buildTypeDropdown(),
                 const SizedBox(height: 12),
@@ -416,15 +439,31 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     );
   }
 
-  Widget _buildTimeField() {
+  Widget _buildLossAdjustmentDateField() {
+    final isReadOnly = _isResumeMode;
     final theme = Theme.of(context);
     return TextFormField(
-      controller: _timeController,
+      controller: _lossAdjustmentDateController,
+      readOnly: isReadOnly,
+      style: isReadOnly ? ReadOnlyFieldStyle.textStyle(theme) : null,
+      decoration: isReadOnly
+          ? ReadOnlyFieldStyle.decoration(
+              theme,
+              labelText: 'Loss Adjustment Date',
+            )
+          : const InputDecoration(labelText: 'Loss Adjustment Date'),
+    );
+  }
+
+  Widget _buildLastUpdatedField() {
+    final theme = Theme.of(context);
+    return TextFormField(
+      controller: _lastUpdatedController,
       readOnly: true,
       style: ReadOnlyFieldStyle.textStyle(theme),
       decoration: ReadOnlyFieldStyle.decoration(
         theme,
-        labelText: 'Time',
+        labelText: 'Last Updated',
       ),
     );
   }
@@ -1083,7 +1122,8 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     final payload = <String, dynamic>{
       'type': type,
       'warehouse_id': warehouseId,
-      'time': _timeController.text.trim(),
+      'date_create': _lossAdjustmentDateController.text.trim(),
+      'time': _lastUpdatedController.text.trim(),
       'items': lineItems,
       'status': isDraft ? 2 : 1,
     };
