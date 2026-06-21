@@ -1,3 +1,9 @@
+# Build artifacts — keep build/web/ but exclude Android/cache output
+build/app/
+build/.cxx/
+build/*.dill
+build/*.dill.track.dill
+
 # Miscellaneous
 *.class
 *.log
