@@ -48,20 +48,24 @@ class _KokonutsInventoryAppState extends State<KokonutsInventoryApp> {
             title: 'Kokonuts Inventory',
             debugShowCheckedModeBanner: false,
             theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: Colors.teal,
-                brightness: Brightness.light,
+              colorScheme: const ColorScheme.dark(
+                primary: Colors.orange,
+                onPrimary: Colors.black,
+                primaryContainer: Color(0xFFBF5B00),
+                onPrimaryContainer: Colors.white,
+                secondary: Colors.orangeAccent,
+                onSecondary: Colors.black,
+                surface: Color(0xFF1C1C1E),
+                onSurface: Color(0xFFE5E5EA),
+                surfaceContainerHighest: Color(0xFF2C2C2E),
+                outline: Color(0xFF636366),
               ),
               useMaterial3: true,
-            ),
-            darkTheme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(
-                seedColor: Colors.teal,
-                brightness: Brightness.dark,
+              snackBarTheme: const SnackBarThemeData(
+                behavior: SnackBarBehavior.fixed,
               ),
-              useMaterial3: true,
             ),
-            themeMode: _appState.themeMode,
+            themeMode: ThemeMode.dark,
             home: _buildHome(),
           );
         },
