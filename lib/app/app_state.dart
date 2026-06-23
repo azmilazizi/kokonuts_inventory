@@ -51,7 +51,8 @@ class AppState extends ChangeNotifier {
     return null;
   }
 
-  /// Loads persisted session information.
+  /// Loads persisted session information. Call [setInitialized] afterwards to
+  /// mark the app as ready and notify listeners.
   Future<void> initialize() async {
     if (_isInitialized) {
       return;
@@ -77,7 +78,11 @@ class AppState extends ChangeNotifier {
     if (storedStaffId != null && storedStaffId.isNotEmpty) {
       _staffId = storedStaffId;
     }
+  }
 
+  /// Marks initialization as complete and notifies listeners. Idempotent.
+  void setInitialized() {
+    if (_isInitialized) return;
     _isInitialized = true;
     notifyListeners();
   }

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import 'app/app_state.dart';
@@ -32,12 +30,6 @@ class _KokonutsInventoryAppState extends State<KokonutsInventoryApp> {
   late final AppState _appState = widget.appState;
 
   @override
-  void initState() {
-    super.initState();
-    unawaited(_appState.initialize());
-  }
-
-  @override
   Widget build(BuildContext context) {
     return AppStateScope(
       notifier: _appState,
@@ -66,7 +58,10 @@ class _KokonutsInventoryAppState extends State<KokonutsInventoryApp> {
               ),
             ),
             themeMode: ThemeMode.dark,
-            home: _buildHome(),
+            home: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              child: _buildHome(),
+            ),
           );
         },
       ),
@@ -75,13 +70,13 @@ class _KokonutsInventoryAppState extends State<KokonutsInventoryApp> {
 
   Widget _buildHome() {
     if (!_appState.isInitialized) {
-      return const SplashScreen();
+      return const SplashScreen(key: ValueKey('splash'));
     }
 
     if (_appState.isLoggedIn) {
-      return const HomeScreen();
+      return const HomeScreen(key: ValueKey('home'));
     }
 
-    return const LoginScreen();
+    return const LoginScreen(key: ValueKey('login'));
   }
 }
