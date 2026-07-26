@@ -39,7 +39,6 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
 
   String? _selectedType;
   String? _selectedWarehouseId;
-  String? _selectedWarehouseName;
   String? _detailType;
   String? _detailWarehouseId;
   String? _detailWarehouseName;
@@ -140,7 +139,8 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         _stocktakeService.fetchItems(headers: headers),
       ];
 
-      if (widget.adjustmentId != null && widget.adjustmentId!.trim().isNotEmpty) {
+      if (widget.adjustmentId != null &&
+          widget.adjustmentId!.trim().isNotEmpty) {
         futures.add(
           _lossAdjustmentsService.fetchLossAdjustmentDetail(
             id: widget.adjustmentId!.trim(),
@@ -185,19 +185,32 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   }
 
   void _hydrateFromDetail(Map<String, dynamic> detail) {
-    final rawType =
-        _readString(detail, const ['type', 'adjustment_type', 'loss_type']);
-    final warehouseId = _readString(detail, const ['warehouse_id', 'warehouseId']);
+    final rawType = _readString(detail, const [
+      'type',
+      'adjustment_type',
+      'loss_type',
+    ]);
+    final warehouseId = _readString(detail, const [
+      'warehouse_id',
+      'warehouseId',
+    ]);
     final warehousesId = _readWarehouseId(detail['warehouses']);
     final warehousesName = _readWarehouseName(detail['warehouses']);
-    final warehouseName = _readString(detail, const ['warehouse_name', 'warehouseName']);
+    final warehouseName = _readString(detail, const [
+      'warehouse_name',
+      'warehouseName',
+    ]);
 
     final nestedWarehouse = detail['warehouse'];
     final nestedWarehouseId = nestedWarehouse is Map<String, dynamic>
         ? _readString(nestedWarehouse, const ['warehouse_id', 'id'])
         : null;
     final nestedWarehouseName = nestedWarehouse is Map<String, dynamic>
-        ? _readString(nestedWarehouse, const ['warehouse_name', 'name', 'title'])
+        ? _readString(nestedWarehouse, const [
+            'warehouse_name',
+            'name',
+            'title',
+          ])
         : null;
 
     final resolvedWarehouseId = _resolveWarehouseSelection(
@@ -211,18 +224,22 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
 
     _detailType = rawType;
     _detailWarehouseId = warehousesId ?? warehouseId ?? nestedWarehouseId;
-    _detailWarehouseName = warehouseName ?? warehousesName ?? nestedWarehouseName;
+    _detailWarehouseName =
+        warehouseName ?? warehousesName ?? nestedWarehouseName;
 
     setState(() {
       _lossAdjustmentDateController.text =
-          _readString(detail, const ['date_create', 'date_created', 'created_at']) ??
-              _lossAdjustmentDateController.text;
+          _readString(detail, const [
+            'date_create',
+            'date_created',
+            'created_at',
+          ]) ??
+          _lossAdjustmentDateController.text;
       _lastUpdatedController.text =
           _readString(detail, const ['time', 'updated_at', 'date_update']) ??
-              _lastUpdatedController.text;
+          _lastUpdatedController.text;
       _selectedType = _resolveTypeSelection(rawType);
       _selectedWarehouseId = resolvedWarehouseId;
-      _selectedWarehouseName = resolvedWarehouseName;
       _warehouseNameController.text = resolvedWarehouseName ?? '';
       _lineItems
         ..clear()
@@ -230,7 +247,9 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     });
   }
 
-  Map<String, dynamic> _resolveLossAdjustmentDetail(Map<String, dynamic> detail) {
+  Map<String, dynamic> _resolveLossAdjustmentDetail(
+    Map<String, dynamic> detail,
+  ) {
     if (_looksLikeLossAdjustment(detail)) {
       return detail;
     }
@@ -271,17 +290,16 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       return detail;
     }
     if (!found!.containsKey('items') && siblingItems != null) {
-      return {
-        ...found!,
-        'items': siblingItems,
-      };
+      return {...found!, 'items': siblingItems};
     }
     return found!;
   }
 
   bool _looksLikeLossAdjustment(Map<String, dynamic> map) {
-    final hasType = map.containsKey('type') || map.containsKey('adjustment_type');
-    final hasWarehouse = map.containsKey('warehouse_id') ||
+    final hasType =
+        map.containsKey('type') || map.containsKey('adjustment_type');
+    final hasWarehouse =
+        map.containsKey('warehouse_id') ||
         map.containsKey('warehouseId') ||
         map.containsKey('warehouses');
     final hasTime = map.containsKey('time') || map.containsKey('date_create');
@@ -300,12 +318,23 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       }
       if (value is Map<String, dynamic>) {
         final lotNumber = _readString(value, const ['lot_number', 'lotNumber']);
-        final currentNumber =
-            _readString(value, const ['current_number', 'currentNumber']);
-        final updatedNumber =
-            _readString(value, const ['updates_number', 'updated_number']);
-        final commodityName =
-            _readString(value, const ['commodity_name', 'item_name', 'name']);
+        final expiryDate = _readString(value, const [
+          'expiry_date',
+          'expiryDate',
+        ]);
+        final currentNumber = _readString(value, const [
+          'current_number',
+          'currentNumber',
+        ]);
+        final updatedNumber = _readString(value, const [
+          'updates_number',
+          'updated_number',
+        ]);
+        final commodityName = _readString(value, const [
+          'commodity_name',
+          'item_name',
+          'name',
+        ]);
         final itemId = _readString(value, const ['item_id', 'itemId', 'items']);
         final unitId = _readString(value, const ['unit', 'unit_id', 'unitId']);
 
@@ -316,6 +345,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
               unitId: unitId,
               commodityName: commodityName ?? 'Unknown item',
               lotNumber: lotNumber,
+              expiryDate: expiryDate,
               currentNumber: currentNumber,
               updatedNumber: updatedNumber ?? '',
             ),
@@ -337,12 +367,15 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     final sanitizedToken = token
         .replaceFirst(RegExp('^Bearer\\s+', caseSensitive: false), '')
         .trim();
-    final normalizedAuth =
-        sanitizedToken.isNotEmpty ? 'Bearer $sanitizedToken' : token.trim();
+    final normalizedAuth = sanitizedToken.isNotEmpty
+        ? 'Bearer $sanitizedToken'
+        : token.trim();
     final autoTokenValue = rawToken
         .replaceFirst(RegExp('^Bearer\\s+', caseSensitive: false), '')
         .trim();
-    final authtokenHeader = autoTokenValue.isNotEmpty ? autoTokenValue : sanitizedToken;
+    final authtokenHeader = autoTokenValue.isNotEmpty
+        ? autoTokenValue
+        : sanitizedToken;
     return {
       'Accept': 'application/json',
       'authtoken': authtokenHeader,
@@ -367,10 +400,14 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         width: dialogWidth,
         height: dialogHeight,
         child: _isLoading
-            ? Center(child: CircularProgressIndicator(color: theme.colorScheme.primary))
+            ? Center(
+                child: CircularProgressIndicator(
+                  color: theme.colorScheme.primary,
+                ),
+              )
             : _loadingError != null
-                ? _buildErrorState(theme)
-                : _buildContent(theme),
+            ? _buildErrorState(theme)
+            : _buildContent(theme),
       ),
       actions: [
         TextButton(
@@ -393,8 +430,9 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     return Center(
       child: Text(
         _loadingError ?? 'Unable to load data.',
-        style: theme.textTheme.bodyMedium
-            ?.copyWith(color: theme.colorScheme.error),
+        style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.error,
+        ),
         textAlign: TextAlign.center,
       ),
     );
@@ -477,9 +515,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         ? [
             DropdownMenuItem(
               value: effectiveSelectedType ?? '',
-              child: Text(
-                _formatTypeLabel(effectiveSelectedType) ?? 'Type',
-              ),
+              child: Text(_formatTypeLabel(effectiveSelectedType) ?? 'Type'),
             ),
           ]
         : const [
@@ -502,10 +538,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
             },
       style: isReadOnly ? ReadOnlyFieldStyle.textStyle(theme) : null,
       decoration: isReadOnly
-          ? ReadOnlyFieldStyle.decoration(
-              theme,
-              labelText: 'Type',
-            )
+          ? ReadOnlyFieldStyle.decoration(theme, labelText: 'Type')
           : const InputDecoration(labelText: 'Type'),
     );
   }
@@ -533,10 +566,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
             },
       style: isReadOnly ? ReadOnlyFieldStyle.textStyle(theme) : null,
       decoration: isReadOnly
-          ? ReadOnlyFieldStyle.decoration(
-              theme,
-              labelText: 'Warehouse',
-            )
+          ? ReadOnlyFieldStyle.decoration(theme, labelText: 'Warehouse')
           : const InputDecoration(labelText: 'Warehouse'),
     );
   }
@@ -545,8 +575,9 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     const minTableWidth = 720.0;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxWidth =
-            constraints.maxWidth.isFinite ? constraints.maxWidth : minTableWidth;
+        final maxWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : minTableWidth;
         final tableWidth = maxWidth < minTableWidth ? minTableWidth : maxWidth;
 
         return SingleChildScrollView(
@@ -559,8 +590,10 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                 Material(
                   color: theme.colorScheme.surfaceVariant.withOpacity(0.6),
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                     child: Row(
                       children: const [
                         Expanded(flex: 3, child: Text('Item')),
@@ -575,11 +608,15 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                 const SizedBox(height: 8),
                 if (_lineItems.isEmpty)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceVariant.withOpacity(0.2),
-                      border: Border.all(color: theme.dividerColor.withOpacity(0.6)),
+                      border: Border.all(
+                        color: theme.dividerColor.withOpacity(0.6),
+                      ),
                     ),
                     child: Row(
                       children: const [
@@ -593,50 +630,48 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                     ),
                   )
                 else
-                  ..._lineItems.asMap().entries.map(
-                    (entry) {
-                      final item = entry.value;
-                      final showTopBorder = entry.key == 0;
-                      final rowBorderColor = theme.dividerColor.withOpacity(0.6);
-                      final rowBackground =
-                          theme.colorScheme.surfaceVariant.withOpacity(0.3);
+                  ..._lineItems.asMap().entries.map((entry) {
+                    final item = entry.value;
+                    final showTopBorder = entry.key == 0;
+                    final rowBorderColor = theme.dividerColor.withOpacity(0.6);
+                    final rowBackground = theme.colorScheme.surfaceVariant
+                        .withOpacity(0.3);
 
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: rowBackground,
+                        border: Border(
+                          top: showTopBorder
+                              ? BorderSide(color: rowBorderColor)
+                              : BorderSide.none,
+                          bottom: BorderSide(color: rowBorderColor),
                         ),
-                        decoration: BoxDecoration(
-                          color: rowBackground,
-                          border: Border(
-                            top: showTopBorder
-                                ? BorderSide(color: rowBorderColor)
-                                : BorderSide.none,
-                            bottom: BorderSide(color: rowBorderColor),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(flex: 3, child: Text(item.commodityName)),
-                            Expanded(flex: 2, child: Text(item.lotNumber)),
-                            Expanded(flex: 2, child: Text(item.currentNumber)),
-                            Expanded(flex: 2, child: Text(item.updatedNumber)),
-                            Expanded(
-                              flex: 1,
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: IconButton(
-                                  icon: const Icon(Icons.delete_outline),
-                                  tooltip: 'Remove item',
-                                  onPressed: () => _removeLineItem(item),
-                                ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(flex: 3, child: Text(item.commodityName)),
+                          Expanded(flex: 2, child: Text(item.lotNumber)),
+                          Expanded(flex: 2, child: Text(item.currentNumber)),
+                          Expanded(flex: 2, child: Text(item.updatedNumber)),
+                          Expanded(
+                            flex: 1,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: IconButton(
+                                icon: const Icon(Icons.delete_outline),
+                                tooltip: 'Remove item',
+                                onPressed: () => _removeLineItem(item),
                               ),
                             ),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
               ],
             ),
           ),
@@ -646,7 +681,8 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   }
 
   Widget _buildAddItemFooter(ThemeData theme) {
-    final canSelectItem = _selectedType != null &&
+    final canSelectItem =
+        _selectedType != null &&
         _selectedType!.trim().isNotEmpty &&
         _selectedWarehouseId != null &&
         _selectedWarehouseId!.trim().isNotEmpty;
@@ -657,7 +693,9 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       if (itemId == null || itemId.trim().isEmpty) {
         continue;
       }
-      adjustedLotsByItemId.putIfAbsent(itemId, () => <String>{}).add(item.lotNumber);
+      adjustedLotsByItemId
+          .putIfAbsent(itemId, () => <String>{})
+          .add(item.lotSelectionKey);
     }
 
     final hasSelectedItem =
@@ -667,40 +705,35 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         : <String>{};
     final availableLots = _lots
         .where((lot) => _isDisplayableLot(lot))
-        .where((lot) => !adjustedLotsForSelectedItem.contains(lot.lotNumber))
+        .where((lot) => !adjustedLotsForSelectedItem.contains(lot.selectionKey))
         .toList();
-    final effectiveSelectedLotNumber = availableLots.any(
-      (lot) => lot.lotNumber == _selectedLotNumber,
-    )
+    final effectiveSelectedLotNumber =
+        availableLots.any((lot) => lot.selectionKey == _selectedLotNumber)
         ? _selectedLotNumber
         : null;
 
     final selectedLot = availableLots.firstWhere(
-      (lot) => lot.lotNumber == effectiveSelectedLotNumber,
-      orElse: () => const StocktakeLotOption(
-        lotNumber: '',
-        inventoryNumber: '',
-      ),
+      (lot) => lot.selectionKey == effectiveSelectedLotNumber,
+      orElse: () =>
+          const StocktakeLotOption(lotNumber: '', inventoryNumber: ''),
     );
 
-    final availableItems = _items
-        .where((item) {
-          if (!_isDisplayableItem(item)) {
-            return false;
-          }
-          final adjustedLots = adjustedLotsByItemId[item.id] ?? <String>{};
-          final knownLots = _lotsByItemId[item.id];
-          if (knownLots == null) {
-            return true;
-          }
-          return knownLots.any(
-            (lot) => _isDisplayableLot(lot) && !adjustedLots.contains(lot.lotNumber),
-          );
-        })
-        .toList();
-    final effectiveSelectedItemId = availableItems.any(
-      (item) => item.id == _selectedItemId,
-    )
+    final availableItems = _items.where((item) {
+      if (!_isDisplayableItem(item)) {
+        return false;
+      }
+      final adjustedLots = adjustedLotsByItemId[item.id] ?? <String>{};
+      final knownLots = _lotsByItemId[item.id];
+      if (knownLots == null) {
+        return true;
+      }
+      return knownLots.any(
+        (lot) =>
+            _isDisplayableLot(lot) && !adjustedLots.contains(lot.selectionKey),
+      );
+    }).toList();
+    final effectiveSelectedItemId =
+        availableItems.any((item) => item.id == _selectedItemId)
         ? _selectedItemId
         : null;
     final hasEffectiveSelection = effectiveSelectedItemId != null;
@@ -733,7 +766,9 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                     ),
                   )
                   .toList(),
-              onChanged: canSelectItem ? (value) => _handleItemSelected(value) : null,
+              onChanged: canSelectItem
+                  ? (value) => _handleItemSelected(value)
+                  : null,
             ),
             const SizedBox(height: 12),
             LayoutBuilder(
@@ -751,8 +786,8 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                   items: availableLots
                       .map(
                         (lot) => DropdownMenuItem(
-                          value: lot.lotNumber,
-                          child: Text(lot.lotNumber),
+                          value: lot.selectionKey,
+                          child: Text(lot.displayName),
                         ),
                       )
                       .toList(),
@@ -761,7 +796,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                           setState(() {
                             _selectedLotNumber = value;
                             final selected = availableLots.firstWhere(
-                              (lot) => lot.lotNumber == value,
+                              (lot) => lot.selectionKey == value,
                               orElse: () => const StocktakeLotOption(
                                 lotNumber: '',
                                 inventoryNumber: '',
@@ -786,14 +821,18 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                 final updatedQuantityField = TextFormField(
                   controller: _updatedQuantityController,
                   enabled: hasEffectiveSelection,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(labelText: 'Updated Quantity'),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Updated Quantity',
+                  ),
                 );
                 final addButton = ValueListenableBuilder<TextEditingValue>(
                   valueListenable: _updatedQuantityController,
                   builder: (context, value, child) {
-                    final canAdd = effectiveSelectedItemId != null &&
+                    final canAdd =
+                        effectiveSelectedItemId != null &&
                         effectiveSelectedLotNumber != null &&
                         selectedLot.inventoryNumber.isNotEmpty &&
                         value.text.trim().isNotEmpty;
@@ -816,10 +855,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                       const SizedBox(height: 12),
                       updatedQuantityField,
                       const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: addButton,
-                      ),
+                      Align(alignment: Alignment.centerRight, child: addButton),
                     ],
                   );
                 }
@@ -953,11 +989,9 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       ),
     );
     final lotOption = _lots.firstWhere(
-      (lot) => lot.lotNumber == _selectedLotNumber,
-      orElse: () => const StocktakeLotOption(
-        lotNumber: '',
-        inventoryNumber: '',
-      ),
+      (lot) => lot.selectionKey == _selectedLotNumber,
+      orElse: () =>
+          const StocktakeLotOption(lotNumber: '', inventoryNumber: ''),
     );
 
     final updatedQuantity = _updatedQuantityController.text.trim();
@@ -975,6 +1009,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
           unitId: itemOption.unitId,
           commodityName: itemOption.commodityName,
           lotNumber: lotOption.lotNumber,
+          expiryDate: lotOption.expiryDate,
           currentNumber: lotOption.inventoryNumber,
           updatedNumber: updatedQuantity,
         ),
@@ -1025,9 +1060,9 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       setState(() {
         _isSaving = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You are not logged in.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('You are not logged in.')));
       return;
     }
 
@@ -1036,8 +1071,8 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     try {
       final adjustmentId = widget.adjustmentId?.trim();
       final hasExistingId = adjustmentId != null && adjustmentId.isNotEmpty;
-      if (isDraft && hasExistingId) {
-        await _lossAdjustmentsService.saveDraftLossAdjustment(
+      if (hasExistingId) {
+        await _lossAdjustmentsService.updateLossAdjustment(
           id: adjustmentId,
           headers: headers,
           payload: payload,
@@ -1054,7 +1089,13 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            isDraft ? 'Stocktake saved as draft.' : 'Stocktake saved.',
+            isDraft
+                ? hasExistingId
+                      ? 'Stock adjustment draft updated.'
+                      : 'Stock adjustment saved as draft.'
+                : hasExistingId
+                ? 'Stock adjustment updated.'
+                : 'Stock adjustment saved.',
           ),
         ),
       );
@@ -1063,16 +1104,16 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.message)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } catch (error) {
       if (!mounted) {
         return;
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.toString())));
     } finally {
       if (mounted) {
         setState(() {
@@ -1085,9 +1126,9 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   Map<String, dynamic>? _buildLossAdjustmentPayload({required bool isDraft}) {
     final type = _selectedType?.trim();
     if (type == null || type.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a type.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a type.')));
       return null;
     }
 
@@ -1114,6 +1155,7 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
             'current_number': item.currentNumber,
             'updates_number': item.updatedNumber,
             'lot_number': item.lotNumber,
+            'expiry_date': item.expiryDate,
             'commodity_name': item.commodityName,
           },
         )
@@ -1199,7 +1241,6 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
     setState(() {
       _selectedType = resolvedType;
       _selectedWarehouseId = resolvedWarehouseId;
-      _selectedWarehouseName = resolvedWarehouseName;
       _warehouseNameController.text = resolvedWarehouseName ?? '';
     });
   }
@@ -1301,6 +1342,7 @@ class StocktakeLineItem {
     required this.unitId,
     required this.commodityName,
     required this.lotNumber,
+    required this.expiryDate,
     required this.currentNumber,
     required this.updatedNumber,
   });
@@ -1309,6 +1351,9 @@ class StocktakeLineItem {
   final String? unitId;
   final String commodityName;
   final String lotNumber;
+  final String? expiryDate;
   final String currentNumber;
   final String updatedNumber;
+
+  String get lotSelectionKey => '$lotNumber|${expiryDate ?? ''}';
 }

@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class LossAdjustmentsService {
-  LossAdjustmentsService({http.Client? client}) : _client = client ?? http.Client();
+  LossAdjustmentsService({http.Client? client})
+    : _client = client ?? http.Client();
 
   final http.Client _client;
 
@@ -18,10 +19,9 @@ class LossAdjustmentsService {
     required int perPage,
     required Map<String, String> headers,
   }) async {
-    final uri = Uri.parse(_baseUrl).replace(queryParameters: {
-      'page': '$page',
-      'per_page': '$perPage',
-    });
+    final uri = Uri.parse(
+      _baseUrl,
+    ).replace(queryParameters: {'page': '$page', 'per_page': '$perPage'});
 
     http.Response response;
     try {
@@ -46,7 +46,11 @@ class LossAdjustmentsService {
     final rawEntries = _extractLossAdjustments(decoded);
     final entries = rawEntries.map(LossAdjustmentEntry.fromJson).toList();
 
-    final pagination = _resolvePagination(decoded, currentPage: page, perPage: perPage);
+    final pagination = _resolvePagination(
+      decoded,
+      currentPage: page,
+      perPage: perPage,
+    );
 
     return LossAdjustmentsPage(entries: entries, hasMore: pagination.hasMore);
   }
@@ -126,7 +130,7 @@ class LossAdjustmentsService {
     }
   }
 
-  Future<void> saveDraftLossAdjustment({
+  Future<void> updateLossAdjustment({
     required String id,
     required Map<String, String> headers,
     required Map<String, dynamic> payload,
@@ -149,9 +153,17 @@ class LossAdjustmentsService {
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw LossAdjustmentsException(
-        'Save draft failed with status ${response.statusCode}: ${response.body}',
+        'Update failed with status ${response.statusCode}: ${response.body}',
       );
     }
+  }
+
+  Future<void> saveDraftLossAdjustment({
+    required String id,
+    required Map<String, String> headers,
+    required Map<String, dynamic> payload,
+  }) {
+    return updateLossAdjustment(id: id, headers: headers, payload: payload);
   }
 
   List<Map<String, dynamic>> _extractLossAdjustments(dynamic decoded) {
@@ -180,12 +192,14 @@ class LossAdjustmentsService {
   }
 
   bool _looksLikeLossAdjustment(Map<String, dynamic> map) {
-    final hasDate = map.containsKey('date_create') ||
+    final hasDate =
+        map.containsKey('date_create') ||
         map.containsKey('date_created') ||
         map.containsKey('created_at');
     final hasTime = map.containsKey('time') || map.containsKey('updated_at');
     final hasStatus = map.containsKey('status') || map.containsKey('state');
-    final hasType = map.containsKey('type') || map.containsKey('adjustment_type');
+    final hasType =
+        map.containsKey('type') || map.containsKey('adjustment_type');
 
     return hasDate && (hasStatus || hasType || hasTime);
   }
@@ -221,7 +235,10 @@ class LossAdjustmentsService {
     return PaginationInfo(hasMore: _countItems(decoded) >= perPage);
   }
 
-  Map<String, dynamic>? _findMap(Map<String, dynamic> source, List<String> keys) {
+  Map<String, dynamic>? _findMap(
+    Map<String, dynamic> source,
+    List<String> keys,
+  ) {
     for (final key in keys) {
       final value = source[key];
       if (value is Map<String, dynamic>) {
@@ -283,10 +300,7 @@ class LossAdjustmentsService {
 }
 
 class LossAdjustmentsPage {
-  LossAdjustmentsPage({
-    required this.entries,
-    required this.hasMore,
-  });
+  LossAdjustmentsPage({required this.entries, required this.hasMore});
 
   final List<LossAdjustmentEntry> entries;
   final bool hasMore;
@@ -313,36 +327,43 @@ class LossAdjustmentEntry {
     String readNestedString(String key, List<String> keys) =>
         _readNestedString(json, key, keys) ?? '';
 
-    final creator = readNestedString(
-      'creator',
-      const ['name', 'full_name', 'username', 'email'],
-    );
+    final creator = readNestedString('creator', const [
+      'name',
+      'full_name',
+      'username',
+      'email',
+    ]);
 
-    final createdBy = readNestedString(
-      'created_by',
-      const ['name', 'full_name', 'username', 'email'],
-    );
+    final createdBy = readNestedString('created_by', const [
+      'name',
+      'full_name',
+      'username',
+      'email',
+    ]);
 
     return LossAdjustmentEntry(
       id: readString(const ['id', 'loss_adjustment_id']),
       type: readString(const ['type', 'adjustment_type', 'loss_type']),
-      dateCreated:
-          readString(const ['date_create', 'date_created', 'created_at']),
+      dateCreated: readString(const [
+        'date_create',
+        'date_created',
+        'created_at',
+      ]),
       lastUpdated: readString(const ['time', 'updated_at', 'date_update']),
       status: readString(const ['status', 'state']),
       creator: creator.isNotEmpty
           ? creator
           : createdBy.isNotEmpty
-              ? createdBy
-              : readString(const [
-                  'creator',
-                  'creator_name',
-                  'created_by',
-                  'created_by_name',
-                  'createdBy',
-                  'user_name',
-                  'username',
-                ]),
+          ? createdBy
+          : readString(const [
+              'creator',
+              'creator_name',
+              'created_by',
+              'created_by_name',
+              'createdBy',
+              'user_name',
+              'username',
+            ]),
     );
   }
 

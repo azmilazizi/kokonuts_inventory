@@ -7,8 +7,9 @@ class StocktakeService {
 
   final http.Client _client;
 
-  static final Uri _warehousesUri =
-      Uri.parse('https://crm.kokonuts.my/warehouse/api/v1/warehouses');
+  static final Uri _warehousesUri = Uri.parse(
+    'https://crm.kokonuts.my/warehouse/api/v1/warehouses',
+  );
   static final Uri _itemsUri = Uri.parse(
     'https://crm.kokonuts.my/warehouse/api/v1/items'
     '?can_be_purchased=can_be_purchased&can_be_inventory=can_be_inventory',
@@ -34,7 +35,9 @@ class StocktakeService {
     try {
       decoded = jsonDecode(response.body);
     } catch (error) {
-      throw StocktakeServiceException('Unable to parse warehouses response: $error');
+      throw StocktakeServiceException(
+        'Unable to parse warehouses response: $error',
+      );
     }
 
     final List<WarehouseOption> warehouses = [];
@@ -78,7 +81,10 @@ class StocktakeService {
       unique[item.id] = item;
     }
     final deduped = unique.values.toList()
-      ..sort((a, b) => a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()));
+      ..sort(
+        (a, b) =>
+            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
+      );
     return deduped;
   }
 
@@ -115,16 +121,30 @@ class StocktakeService {
     _collectLots(decoded, lots);
     final unique = <String, StocktakeLotOption>{};
     for (final lot in lots) {
-      unique[lot.lotNumber] = lot;
+      unique[lot.selectionKey] = lot;
     }
     final deduped = unique.values.toList()
-      ..sort((a, b) => a.lotNumber.toLowerCase().compareTo(b.lotNumber.toLowerCase()));
+      ..sort((a, b) {
+        final lotComparison = a.lotNumber.toLowerCase().compareTo(
+          b.lotNumber.toLowerCase(),
+        );
+        if (lotComparison != 0) {
+          return lotComparison;
+        }
+        return (a.expiryDate ?? '').toLowerCase().compareTo(
+          (b.expiryDate ?? '').toLowerCase(),
+        );
+      });
     return deduped;
   }
 
   void _collectWarehouses(dynamic source, List<WarehouseOption> target) {
     if (source is Map<String, dynamic>) {
-      final name = _readString(source, const ['warehouse_name', 'name', 'title']);
+      final name = _readString(source, const [
+        'warehouse_name',
+        'name',
+        'title',
+      ]);
       final id = _readString(source, const ['warehouse_id', 'id']);
       if (name != null && id != null) {
         target.add(WarehouseOption(id: id, name: name));
@@ -143,7 +163,11 @@ class StocktakeService {
     if (source is Map<String, dynamic>) {
       final id = _readString(source, const ['item_id', 'id']);
       final skuCode = _readString(source, const ['sku_code', 'skuCode', 'sku']);
-      final skuName = _readString(source, const ['sku_name', 'skuName', 'name']);
+      final skuName = _readString(source, const [
+        'sku_name',
+        'skuName',
+        'name',
+      ]);
       final name = _readString(source, const ['name', 'item_name', 'title']);
       final unitId = _readString(source, const ['unit_id', 'unitId', 'unit']);
       final total = _readString(source, const [
@@ -155,13 +179,15 @@ class StocktakeService {
       ]);
 
       if (id != null && (skuName != null || name != null)) {
-        target.add(StocktakeItemOption(
-          id: id,
-          skuCode: skuCode,
-          skuName: skuName ?? name ?? id,
-          total: total,
-          unitId: unitId,
-        ));
+        target.add(
+          StocktakeItemOption(
+            id: id,
+            skuCode: skuCode,
+            skuName: skuName ?? name ?? id,
+            total: total,
+            unitId: unitId,
+          ),
+        );
       }
       for (final value in source.values) {
         _collectItems(value, target);
@@ -175,18 +201,30 @@ class StocktakeService {
 
   void _collectLots(dynamic source, List<StocktakeLotOption> target) {
     if (source is Map<String, dynamic>) {
-      final lotNumber = _readString(source, const ['lot_number', 'lotNumber', 'lot']);
+      final lotNumber = _readString(source, const [
+        'lot_number',
+        'lotNumber',
+        'lot',
+      ]);
       final inventory = _readString(source, const [
         'inventory_number',
         'inventory',
         'current_number',
         'quantity',
       ]);
+      final expiryDate = _readString(source, const [
+        'expiry_date',
+        'expiryDate',
+        'expiration_date',
+      ]);
       if (lotNumber != null && inventory != null) {
-        target.add(StocktakeLotOption(
-          lotNumber: lotNumber,
-          inventoryNumber: inventory,
-        ));
+        target.add(
+          StocktakeLotOption(
+            lotNumber: lotNumber,
+            inventoryNumber: inventory,
+            expiryDate: expiryDate,
+          ),
+        );
       }
       for (final value in source.values) {
         _collectLots(value, target);
@@ -256,10 +294,22 @@ class StocktakeLotOption {
   const StocktakeLotOption({
     required this.lotNumber,
     required this.inventoryNumber,
+    this.expiryDate,
   });
 
   final String lotNumber;
   final String inventoryNumber;
+  final String? expiryDate;
+
+  String get selectionKey => '$lotNumber|${expiryDate ?? ''}';
+
+  String get displayName {
+    final expiry = expiryDate?.trim();
+    if (expiry == null || expiry.isEmpty) {
+      return lotNumber;
+    }
+    return '$lotNumber (Exp: $expiry)';
+  }
 }
 
 class StocktakeServiceException implements Exception {
