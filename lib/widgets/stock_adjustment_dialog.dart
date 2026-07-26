@@ -245,6 +245,8 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         ..clear()
         ..addAll(_extractLineItems(detail));
     });
+
+    unawaited(_prefetchLotsForExistingLineItems());
   }
 
   Map<String, dynamic> _resolveLossAdjustmentDetail(
@@ -975,6 +977,53 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
         _lots = const [];
       });
     }
+  }
+
+  Future<void> _prefetchLotsForExistingLineItems() async {
+    final warehouseId = _selectedWarehouseId?.trim();
+    if (warehouseId == null || warehouseId.isEmpty) {
+      return;
+    }
+
+    final itemIds = _lineItems
+        .map((item) => item.itemId?.trim() ?? '')
+        .where((itemId) => itemId.isNotEmpty)
+        .toSet()
+        .where((itemId) => !_lotsByItemId.containsKey(itemId))
+        .toList();
+
+    if (itemIds.isEmpty) {
+      return;
+    }
+
+    final appState = AppStateScope.of(context);
+    final token = await appState.getValidAuthToken();
+    if (!mounted || token == null || token.trim().isEmpty) {
+      return;
+    }
+
+    final headers = _buildAuthHeaders(appState, token);
+    final fetchedLots = <String, List<StocktakeLotOption>>{};
+
+    for (final itemId in itemIds) {
+      try {
+        fetchedLots[itemId] = await _stocktakeService.fetchLots(
+          itemId: itemId,
+          warehouseId: warehouseId,
+          headers: headers,
+        );
+      } catch (_) {
+        fetchedLots[itemId] = const [];
+      }
+    }
+
+    if (!mounted || fetchedLots.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _lotsByItemId.addAll(fetchedLots);
+    });
   }
 
   void _handleAddLineItem() {
